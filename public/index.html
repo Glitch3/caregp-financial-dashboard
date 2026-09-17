@@ -3,27 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CareGP Financial Dashboard</title>
+  <title>CareGP Financial Data Inspector</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-8">
-  <div id="root">Loading CareGP Financial Data...</div>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-6 font-sans">
+  <div class="max-w-7xl mx-auto space-y-6">
+    <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+      <div>
+        <h1 class="text-2xl font-bold text-emerald-400">CareGP Spreadsheet Inspector</h1>
+        <p class="text-slate-400 text-sm">Inspecting Google Sheet metrics and tabs</p>
+      </div>
+      <div id="tabs-container" class="flex gap-2"></div>
+    </div>
+
+    <div id="content" class="space-y-6">Loading sheet data...</div>
+  </div>
+
   <script type="module">
-    async function loadData() {
+    let allTabs = [];
+    
+    async function init() {
       try {
-        const res = await fetch('./api/sheet-data');
-        const data = await res.json();
-        console.log('Sheet Data Loaded:', data);
-        document.getElementById('root').innerHTML = `
-          <h1 class="text-2xl font-bold mb-4">CareGP Financial Dashboard Raw Data Inspection</h1>
-          <pre class="bg-slate-800 p-4 rounded border border-slate-700 overflow-auto text-xs max-h-[80vh]">${JSON.stringify(data, null, 2)}</pre>
-        `;
+        const tabsRes = await fetch('./api/tabs');
+        const tabsData = await tabsRes.json();
+        allTabs = tabsData.tabs || [{ name: 'Default Sheet (192931357)', gid: '192931357' }];
+        
+        if (allTabs.length === 0) {
+          allTabs = [{ name: 'Main Sheet', gid: '192931357' }, { name: 'Sheet 0', gid: '0' }];
+        }
+
+        renderTabButtons();
+        loadTab(allTabs[0].gid);
       } catch (err) {
-        console.error('Failed to load sheet:', err);
-        document.getElementById('root').innerHTML = `<div class="text-red-400">Error: ${err.message}</div>`;
+        console.error(err);
+        loadTab('192931357');
       }
     }
-    loadData();
+
+    function renderTabButtons() {
+      const container = document.getElementById('tabs-container');
+      container.innerHTML = allTabs.map(t => `
+        <button onclick="window.loadTab('${t.gid}')" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 text-slate-200">
+          ${t.name} (${t.gid})
+        </button>
+      `).join('');
+    }
+
+    async function loadTab(gid) {
+      const content = document.getElementById('content');
+      content.innerHTML = '<div class="p-8 text-center text-slate-400">Loading tab ' + gid + '...</div>';
+      
+      try {
+        const res = await fetch('./api/sheet-data?gid=' + gid);
+        const json = await res.json();
+        console.log('GID', gid, json);
+        
+        let html = '<div class="bg-slate-900 border border-slate-800 rounded-lg p-4 overflow-x-auto">';
+        html += '<h2 class="text-lg font-semibold text-slate-200 mb-2">Rows: ' + json.rowCount + '</h2>';
+        html += '<table class="w-full text-xs text-left border-collapse">';
+        
+        if (json.data && json.data.length > 0) {
+          json.data.forEach((row, i) => {
+            const isHeader = i === 0;
+            html += `<tr class="${isHeader ? 'bg-slate-800 text-emerald-400 font-bold' : 'border-b border-slate-800 hover:bg-slate-800/50'}">`;
+            row.forEach(cell => {
+              html += `<td class="p-2 border border-slate-800 max-w-xs truncate">${cell || ''}</td>`;
+            });
+            html += '</tr>';
+          });
+        }
+        html += '</table></div>';
+        
+        html += '<details class="mt-4"><summary class="cursor-pointer text-slate-400 text-xs">View Raw JSON</summary><pre class="bg-slate-900 p-4 text-xs text-slate-300 rounded overflow-auto mt-2">' + JSON.stringify(json, null, 2) + '</pre></details>';
+        
+        content.innerHTML = html;
+      } catch (err) {
+        content.innerHTML = '<div class="text-red-400">Error loading tab: ' + err.message + '</div>';
+      }
+    }
+
+    window.loadTab = loadTab;
+    init();
   </script>
 </body>
 </html>
