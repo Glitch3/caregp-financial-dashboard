@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareGP Financial Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-8">
+  <div id="root">Loading CareGP Financial Data...</div>
+  <script type="module">
+    async function loadData() {
+      try {
+        const res = await fetch('./api/sheet-data');
+        const data = await res.json();
+        console.log('Sheet Data Loaded:', data);
+        document.getElementById('root').innerHTML = `
+          <h1 class="text-2xl font-bold mb-4">CareGP Financial Dashboard Raw Data Inspection</h1>
+          <pre class="bg-slate-800 p-4 rounded border border-slate-700 overflow-auto text-xs max-h-[80vh]">${JSON.stringify(data, null, 2)}</pre>
+        `;
+      } catch (err) {
+        console.error('Failed to load sheet:', err);
+        document.getElementById('root').innerHTML = `<div class="text-red-400">Error: ${err.message}</div>`;
+      }
+    }
+    loadData();
+  </script>
+</body>
+</html>
