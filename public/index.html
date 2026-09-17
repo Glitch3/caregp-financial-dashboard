@@ -13,22 +13,34 @@
       theme: {
         extend: {
           colors: {
-            brand: {
-              50: '#ecfdf5',
-              100: '#d1fae5',
-              200: '#a7f3d0',
-              500: '#10b981',
-              600: '#059669',
-              700: '#047857',
-              800: '#065f46',
-              900: '#064e3b',
+            carenavy: {
+              50: '#eef6ff',
+              100: '#d9eaff',
+              200: '#bcdaff',
+              300: '#8ec1ff',
+              400: '#589dff',
+              500: '#0066ff', // CareGP Electric Blue
+              600: '#0052db',
+              700: '#0040b3',
+              800: '#001a35', // CareGP Deep Navy
+              900: '#00142b',
+              950: '#000c1c',
             },
-            dark: {
-              canvas: '#0b0f19',
-              surface: '#111827',
-              elevated: '#1f2937',
-              border: '#1f2937',
-              borderStrong: '#374151'
+            caremint: {
+              50: '#e6fff7',
+              100: '#b3ffea',
+              200: '#80ffd8',
+              400: '#00e6ae',
+              500: '#00d2a0', // CareGP Mint Green
+              600: '#00a880',
+              700: '#007e60',
+            },
+            caredark: {
+              canvas: '#060c18',
+              surface: '#0f1c33',
+              elevated: '#172745',
+              border: '#1a2e4f',
+              borderStrong: '#253f6b'
             }
           },
           fontFamily: {
@@ -58,7 +70,7 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
   <style>
-    /* Tabular numbers and scrollbars */
+    /* Tabular numbers and custom scrollbars */
     .numeric, table, [data-numeric="true"] {
       font-variant-numeric: tabular-nums;
     }
@@ -67,18 +79,18 @@
       height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: rgba(11, 15, 25, 0.8);
+      background: rgba(6, 12, 24, 0.8);
     }
     ::-webkit-scrollbar-thumb {
-      background: rgba(51, 65, 85, 0.8);
+      background: rgba(37, 63, 107, 0.8);
       border-radius: 3px;
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: rgba(71, 85, 105, 1);
+      background: rgba(0, 102, 255, 0.8);
     }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-emerald-500 selection:text-white">
+<body class="bg-[#060c18] dark:bg-[#060c18] text-slate-100 min-h-screen font-sans antialiased selection:bg-[#0066ff] selection:text-white transition-colors duration-200">
   <div id="root"></div>
 
   <script type="text/babel" data-type="module" data-presets="react">
@@ -90,7 +102,7 @@
       ChevronDown, ChevronUp, Filter, Users, Cpu, ShieldCheck, Zap, Activity, Info, 
       Calculator, ArrowRight, X, ExternalLink, Calendar, HelpCircle, Flame,
       PieChart as PieIcon, Layers, Target, Scale, Award, Percent, BarChart3,
-      Mic, Receipt, Sparkles, UserCheck, Heart, AlertTriangle
+      Mic, Receipt, Sparkles, UserCheck, Heart, AlertTriangle, Moon, Sun, Shield
     } from 'lucide-react';
     import { 
       ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, 
@@ -111,6 +123,7 @@
       const [sortField, setSortField] = useState('financialSavings');
       const [sortDirection, setSortDir] = useState('desc');
       const [page, setPage] = useState(1);
+      const [isDarkMode, setIsDarkMode] = useState(true);
       const pageSize = 20;
 
       // Dynamic Modeler & Simulator States
@@ -120,7 +133,17 @@
       const [simTimeSavedSec, setSimTimeSavedSec] = useState(20);
       const [simMonthlyBurn, setSimMonthlyBurn] = useState(85000);
       const [simCashBalance, setSimCashBalance] = useState(2400000);
-      const [simFteCount, setSimFteCount] = useState(24);
+
+      // Theme toggle
+      const toggleTheme = () => {
+        const nextMode = !isDarkMode;
+        setIsDarkMode(nextMode);
+        if (nextMode) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      };
 
       // Keyboard shortcuts
       useEffect(() => {
@@ -276,28 +299,31 @@
 
       if (loading) {
         return (
-          <div class="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-300 space-y-4">
+          <div class="flex flex-col items-center justify-center min-h-screen bg-[#060c18] text-slate-300 space-y-4">
             <div class="relative w-16 h-16">
-              <div class="absolute inset-0 rounded-full border-4 border-slate-800"></div>
-              <div class="absolute inset-0 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"></div>
+              <div class="absolute inset-0 rounded-full border-4 border-[#0a192f]"></div>
+              <div class="absolute inset-0 rounded-full border-4 border-[#0066ff] border-t-transparent animate-spin"></div>
             </div>
-            <p class="text-sm font-medium tracking-wide text-slate-400 animate-pulse">Syncing CareGP Financial & SaaS Metrics from Google Sheets...</p>
+            <div class="text-center space-y-1">
+              <h2 class="text-lg font-bold text-white tracking-wide">CareGP</h2>
+              <p class="text-xs text-[#00d2a0] font-medium animate-pulse">Syncing Financial Metrics & Medical Practice Intelligence...</p>
+            </div>
           </div>
         );
       }
 
       if (error) {
         return (
-          <div class="flex flex-col items-center justify-center min-h-screen bg-slate-950 p-6">
-            <div class="bg-slate-900 border border-red-500/30 rounded-xl p-6 max-w-md w-full text-center space-y-4 shadow-2xl">
+          <div class="flex flex-col items-center justify-center min-h-screen bg-[#060c18] p-6">
+            <div class="bg-[#0f1c33] border border-red-500/30 rounded-2xl p-6 max-w-md w-full text-center space-y-4 shadow-2xl">
               <div class="w-12 h-12 bg-red-500/10 text-red-400 rounded-full flex items-center justify-center mx-auto">
                 <AlertCircle size={24} />
               </div>
-              <h2 class="text-lg font-bold text-slate-100">Data Sync Failed</h2>
+              <h2 class="text-lg font-bold text-white">Data Sync Failed</h2>
               <p class="text-sm text-slate-400">{error}</p>
               <button 
                 onClick={() => fetchData(true)}
-                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition-colors"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0066ff] hover:bg-[#0052db] text-white font-medium text-sm transition-colors"
               >
                 <RefreshCw size={16} /> Retry Sync
               </button>
@@ -313,26 +339,26 @@
       const ops = summary.operations;
       const strat = summary.strategic;
 
-      // Status pill color map
+      // Status pill badge helper matching CareGP brand
       const getStatusBadge = (status) => {
         switch(status) {
           case 'Closed':
-            return <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Closed</span>;
+            return <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#00d2a0]/15 text-[#00d2a0] border border-[#00d2a0]/30"><span class="w-1.5 h-1.5 rounded-full bg-[#00d2a0]"></span>Closed</span>;
           case 'Pilot':
-            return <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20"><span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>Pilot</span>;
+            return <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#0066ff]/15 text-[#388eff] border border-[#0066ff]/30"><span class="w-1.5 h-1.5 rounded-full bg-[#0066ff]"></span>Pilot</span>;
           case 'Warm Pilot':
-            return <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>Warm Pilot</span>;
+            return <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>Warm Pilot</span>;
           case 'Dropped Off':
-            return <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20"><span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>Dropped Off</span>;
+            return <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30"><span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>Dropped Off</span>;
           default:
-            return <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">{status}</span>;
+            return <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">{status}</span>;
         }
       };
 
       // Agent distribution pie chart
       const agentDistChartData = [
-        { name: '1 Agent (Docs)', value: ret.agentDistribution.singleAgent, color: '#3b82f6' },
-        { name: '2 Agents (Docs + Voice)', value: ret.agentDistribution.dualAgent, color: '#10b981' },
+        { name: '1 Agent (Documents)', value: ret.agentDistribution.singleAgent, color: '#0066ff' },
+        { name: '2 Agents (Docs + Voice)', value: ret.agentDistribution.dualAgent, color: '#00d2a0' },
         { name: '3 Agents (Docs + Voice + Billing)', value: ret.agentDistribution.triAgent, color: '#8b5cf6' },
       ];
 
@@ -348,55 +374,91 @@
         }));
 
       return (
-        <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-          {/* HEADER */}
-          <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+        <div class="min-h-screen bg-slate-50 dark:bg-[#060c18] text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-200">
+          
+          {/* TOP ANNOUNCEMENT / REGULATORY COMPLIANCE BAR */}
+          <div class="bg-gradient-to-r from-[#001a35] via-[#002b5c] to-[#001a35] text-white px-4 py-1.5 text-xs border-b border-[#003d80] flex flex-wrap items-center justify-between gap-2 shadow-sm">
+            <div class="flex items-center gap-2 font-medium">
+              <span class="inline-flex items-center gap-1 text-[#00d2a0] font-bold">
+                <Shield size={14} /> 🇦🇺 CareGP Australia
+              </span>
+              <span class="hidden sm:inline text-slate-300">|</span>
+              <span class="hidden sm:inline text-slate-300">Australian Health Data Sovereignty (Sydney DCs) • RACGP & AHPRA Compliant</span>
+            </div>
+            <div class="flex items-center gap-4 text-[11px] text-slate-300">
+              <span class="flex items-center gap-1">
+                <CheckCircle2 size={12} class="text-[#00d2a0]" /> Best Practice Ready
+              </span>
+              <span class="flex items-center gap-1">
+                <CheckCircle2 size={12} class="text-[#00d2a0]" /> MedicalDirector Ready
+              </span>
+              <a href="https://www.caregp.com.au" target="_blank" rel="noopener noreferrer" class="text-[#388eff] hover:underline flex items-center gap-0.5 font-medium">
+                caregp.com.au <ExternalLink size={10} />
+              </a>
+            </div>
+          </div>
+
+          {/* MAIN CAREGP NAVIGATION HEADER */}
+          <header class="sticky top-0 z-30 bg-[#001a35]/95 dark:bg-[#060c18]/95 backdrop-blur-md border-b border-[#003d80] dark:border-[#1a2e4f] px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4 text-white shadow-lg">
             <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-slate-950 font-bold shadow-lg shadow-emerald-500/20">
-                <Activity size={20} />
-              </div>
-              <div>
-                <div class="flex items-center gap-2">
-                  <h1 class="text-base font-bold tracking-tight text-slate-100">CareGP</h1>
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                    SaaS Financial & Operational Intelligence
-                  </span>
+              <a href="https://www.caregp.com.au" target="_blank" class="flex items-center gap-2.5 group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0066ff] via-[#00a3ff] to-[#00d2a0] flex items-center justify-center text-white font-bold shadow-lg shadow-[#0066ff]/20 group-hover:scale-105 transition-transform">
+                  <Activity size={22} className="text-white" />
                 </div>
-                <p class="text-xs text-slate-400">Live ROI, Unit Economics, Retention & Multi-Agent Analytics</p>
-              </div>
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xl font-black tracking-tight text-white font-sans">
+                      Care<span class="text-[#00a3ff]">GP</span>
+                    </span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#00d2a0]/20 text-[#00d2a0] border border-[#00d2a0]/40 uppercase tracking-wide">
+                      Financial Intelligence
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-slate-300 font-medium">Executive SaaS Metrics & Clinic Practice Analytics</p>
+                </div>
+              </a>
             </div>
 
             <div class="flex items-center gap-3 flex-wrap">
-              {/* Search Bar */}
+              {/* Search Input */}
               <div class="relative w-64 md:w-72">
                 <Search size={15} class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
                   id="clinic-search-input"
                   type="text"
-                  placeholder="Search clinic or comments... (/)"
+                  placeholder="Search clinic or notes... (/)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  class="w-full h-8 pl-9 pr-8 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 transition-all"
+                  class="w-full h-8.5 pl-9 pr-8 rounded-lg bg-[#000c1c] dark:bg-[#0f1c33] border border-[#003d80] dark:border-[#1a2e4f] text-xs text-white placeholder:text-slate-400 focus:outline-none focus:border-[#0066ff] transition-all"
                 />
                 {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+                  <button onClick={() => setSearchQuery('')} class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
                     <X size={13} />
                   </button>
                 )}
               </div>
 
               {/* Sync Status Badge */}
-              <div class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 text-xs text-slate-400">
-                <span class={`w-2 h-2 rounded-full ${meta.isCached ? 'bg-amber-400' : 'bg-emerald-400'} animate-pulse`}></span>
-                <span>{meta.isCached ? 'Cached' : 'Sheets Live'}</span>
+              <div class="flex items-center gap-2 bg-[#000c1c] dark:bg-[#0f1c33] px-3 py-1.5 rounded-lg border border-[#003d80] dark:border-[#1a2e4f] text-xs text-slate-300">
+                <span class={`w-2 h-2 rounded-full ${meta.isCached ? 'bg-amber-400' : 'bg-[#00d2a0]'} animate-pulse`}></span>
+                <span class="font-medium">{meta.isCached ? 'Cached' : 'Live Sheets'}</span>
                 <span class="text-slate-600">|</span>
-                <span class="text-[11px] text-slate-500">{meta.topLastUpdated}</span>
+                <span class="text-[11px] text-slate-400">{meta.topLastUpdated}</span>
               </div>
+
+              {/* Theme Toggle */}
+              <button 
+                onClick={toggleTheme}
+                title="Toggle Dark/Light Mode"
+                class="h-8.5 px-2.5 rounded-lg bg-[#002b5c] dark:bg-[#0f1c33] hover:bg-[#003d80] text-slate-200 text-xs font-medium border border-[#003d80] dark:border-[#1a2e4f] flex items-center gap-1.5 transition-all"
+              >
+                {isDarkMode ? <Sun size={14} class="text-amber-400" /> : <Moon size={14} class="text-[#00a3ff]" />}
+              </button>
 
               <button 
                 onClick={() => fetchData(true)}
                 disabled={refreshing}
-                class="h-8 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-all disabled:opacity-50"
+                class="h-8.5 px-3 rounded-lg bg-[#002b5c] dark:bg-[#0f1c33] hover:bg-[#003d80] text-white text-xs font-medium border border-[#003d80] dark:border-[#1a2e4f] flex items-center gap-1.5 transition-all disabled:opacity-50"
               >
                 <RefreshCw size={13} class={refreshing ? 'animate-spin' : ''} />
                 <span>Refresh</span>
@@ -404,7 +466,7 @@
 
               <button 
                 onClick={exportCSV}
-                class="h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium flex items-center gap-1.5 transition-all shadow-md shadow-emerald-600/20"
+                class="h-8.5 px-3.5 rounded-lg bg-[#0066ff] hover:bg-[#0052db] text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md shadow-[#0066ff]/20"
               >
                 <Download size={13} />
                 <span>Export CSV</span>
@@ -412,163 +474,163 @@
             </div>
           </header>
 
-          {/* MAIN CONTENT AREA */}
+          {/* MAIN CONTENT CONTAINER */}
           <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
 
-            {/* TOP EXECUTIVE METRIC BANNER (5 HIGHLIGHT CARDS) */}
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {/* TOP METRIC HIGHLIGHT STRIP (CAREGP 5 CORE METRICS) */}
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
               
-              {/* 1. Live ARR & MRR */}
-              <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 relative overflow-hidden group hover:border-slate-700 transition-all">
-                <div class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 flex items-center justify-between">
+              {/* 1. Live ARR / MRR */}
+              <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-4 shadow-sm relative overflow-hidden group hover:border-[#0066ff] transition-all">
+                <div class="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
                   <span>Live ARR / MRR</span>
-                  <DollarSign size={15} class="text-emerald-400" />
+                  <DollarSign size={16} class="text-[#0066ff]" />
                 </div>
-                <div class="text-xl font-bold text-slate-100 numeric tracking-tight">
+                <div class="text-2xl font-bold text-slate-900 dark:text-white numeric tracking-tight">
                   ${Math.round(summary.totalLiveArr).toLocaleString()}
                 </div>
-                <div class="text-[11px] text-emerald-400 font-semibold mt-1">
-                  ${Math.round(summary.totalLiveMrr).toLocaleString()} / mo MRR
+                <div class="text-xs text-[#0066ff] font-semibold mt-1 flex items-center gap-1">
+                  <TrendingUp size={12} /> ${Math.round(summary.totalLiveMrr).toLocaleString()} / mo MRR
                 </div>
               </div>
 
               {/* 2. NRR % */}
-              <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 relative overflow-hidden group hover:border-slate-700 transition-all">
-                <div class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 flex items-center justify-between">
-                  <span>NRR %</span>
-                  <TrendingUp size={15} class="text-blue-400" />
+              <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-4 shadow-sm relative overflow-hidden group hover:border-[#00d2a0] transition-all">
+                <div class="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
+                  <span>Net Retention (NRR)</span>
+                  <TrendingUp size={16} class="text-[#00d2a0]" />
                 </div>
-                <div class="text-xl font-bold text-slate-100 numeric tracking-tight">
+                <div class="text-2xl font-bold text-slate-900 dark:text-white numeric tracking-tight">
                   {ret.nrr}%
                 </div>
-                <div class="text-[11px] text-blue-400 font-semibold mt-1">
-                  GRR: {ret.grr}% (Healthy &gt;85%)
+                <div class="text-xs text-[#00d2a0] font-semibold mt-1">
+                  GRR: {ret.grr}% (&ge;85% Healthy)
                 </div>
               </div>
 
               {/* 3. Burn Multiple & Runway */}
-              <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 relative overflow-hidden group hover:border-slate-700 transition-all">
-                <div class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 flex items-center justify-between">
+              <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-4 shadow-sm relative overflow-hidden group hover:border-amber-400 transition-all">
+                <div class="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
                   <span>Burn Multiple</span>
-                  <Flame size={15} class="text-amber-400" />
+                  <Flame size={16} class="text-amber-500 dark:text-amber-400" />
                 </div>
-                <div class="text-xl font-bold text-slate-100 numeric tracking-tight">
+                <div class="text-2xl font-bold text-slate-900 dark:text-white numeric tracking-tight">
                   {eff.burnMultiple}x
                 </div>
-                <div class="text-[11px] text-amber-400 font-semibold mt-1">
-                  {eff.runwayMonths} mo Runway
+                <div class="text-xs text-amber-600 dark:text-amber-400 font-semibold mt-1">
+                  {eff.runwayMonths} Months Runway
                 </div>
               </div>
 
               {/* 4. Rule of 40 Score */}
-              <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 relative overflow-hidden group hover:border-slate-700 transition-all">
-                <div class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 flex items-center justify-between">
+              <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-4 shadow-sm relative overflow-hidden group hover:border-purple-500 transition-all">
+                <div class="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
                   <span>Rule of 40</span>
-                  <Target size={15} class="text-purple-400" />
+                  <Target size={16} class="text-purple-500 dark:text-purple-400" />
                 </div>
-                <div class="text-xl font-bold text-purple-400 numeric tracking-tight">
+                <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 numeric tracking-tight">
                   +{eff.ruleOf40Score}
                 </div>
-                <div class="text-[11px] text-slate-400 mt-1">
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   {eff.yoyArrGrowthPct}% Growth - 26% Op Margin
                 </div>
               </div>
 
               {/* 5. Agent Attach Rate */}
-              <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 relative overflow-hidden group hover:border-slate-700 transition-all">
-                <div class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 flex items-center justify-between">
+              <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-4 shadow-sm relative overflow-hidden group hover:border-[#00a3ff] transition-all">
+                <div class="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
                   <span>Agent Attach</span>
-                  <Cpu size={15} class="text-teal-400" />
+                  <Cpu size={16} class="text-[#00a3ff]" />
                 </div>
-                <div class="text-xl font-bold text-teal-400 numeric tracking-tight">
-                  {ret.agentAttachRate} / 3
+                <div class="text-2xl font-bold text-[#00a3ff] numeric tracking-tight">
+                  {ret.agentAttachRate} / 3.0
                 </div>
-                <div class="text-[11px] text-slate-400 mt-1">
-                  {ret.agentDistribution.triAgent} Clinics with All 3 Agents
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  {ret.agentDistribution.triAgent} Clinics using 3 Agents
                 </div>
               </div>
 
             </div>
 
-            {/* TAB NAVIGATION STRIP */}
-            <div class="border-b border-slate-800 flex items-center justify-between overflow-x-auto gap-2">
+            {/* TAB NAVIGATION STRIP WITH CAREGP STYLING */}
+            <div class="border-b border-slate-200 dark:border-[#1a2e4f] flex items-center justify-between overflow-x-auto gap-2">
               <div class="flex items-center gap-1">
                 
                 <button 
                   onClick={() => setActiveTab('overview')}
-                  class={`px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  class={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
                     activeTab === 'overview' 
-                      ? 'border-emerald-500 text-emerald-400 bg-slate-900/50' 
-                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                      ? 'border-[#0066ff] text-[#0066ff] dark:text-[#388eff] bg-[#0066ff]/5 dark:bg-[#0066ff]/10' 
+                      : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
-                  <Activity size={14} /> Overview
+                  <Activity size={15} /> Overview & Financial ROI
                 </button>
 
                 <button 
                   onClick={() => setActiveTab('retention')}
-                  class={`px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  class={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
                     activeTab === 'retention' 
-                      ? 'border-emerald-500 text-emerald-400 bg-slate-900/50' 
-                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                      ? 'border-[#0066ff] text-[#0066ff] dark:text-[#388eff] bg-[#0066ff]/5 dark:bg-[#0066ff]/10' 
+                      : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
-                  <TrendingUp size={14} /> 3. Retention & Expansion
+                  <TrendingUp size={15} /> 3. Retention & Multi-Agent
                 </button>
 
                 <button 
                   onClick={() => setActiveTab('health')}
-                  class={`px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  class={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
                     activeTab === 'health' 
-                      ? 'border-emerald-500 text-emerald-400 bg-slate-900/50' 
-                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                      ? 'border-[#0066ff] text-[#0066ff] dark:text-[#388eff] bg-[#0066ff]/5 dark:bg-[#0066ff]/10' 
+                      : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
-                  <Flame size={14} /> 4. Financial Health & Efficiency
+                  <Flame size={15} /> 4. Financial Health & Efficiency
                 </button>
 
                 <button 
                   onClick={() => setActiveTab('operations')}
-                  class={`px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  class={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
                     activeTab === 'operations' 
-                      ? 'border-emerald-500 text-emerald-400 bg-slate-900/50' 
-                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                      ? 'border-[#0066ff] text-[#0066ff] dark:text-[#388eff] bg-[#0066ff]/5 dark:bg-[#0066ff]/10' 
+                      : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
-                  <Cpu size={14} /> 5. Operational Metrics
+                  <Cpu size={15} /> 5. Operational Metrics
                 </button>
 
                 <button 
                   onClick={() => setActiveTab('strategic')}
-                  class={`px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  class={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
                     activeTab === 'strategic' 
-                      ? 'border-emerald-500 text-emerald-400 bg-slate-900/50' 
-                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                      ? 'border-[#0066ff] text-[#0066ff] dark:text-[#388eff] bg-[#0066ff]/5 dark:bg-[#0066ff]/10' 
+                      : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
-                  <Award size={14} /> 6. Strategic & Risk
+                  <Award size={15} /> 6. Strategic & Risk
                 </button>
 
                 <button 
                   onClick={() => setActiveTab('calculator')}
-                  class={`px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  class={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
                     activeTab === 'calculator' 
-                      ? 'border-emerald-500 text-emerald-400 bg-slate-900/50' 
-                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                      ? 'border-[#0066ff] text-[#0066ff] dark:text-[#388eff] bg-[#0066ff]/5 dark:bg-[#0066ff]/10' 
+                      : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
-                  <Calculator size={14} /> CareGP ROI Modeler
+                  <Calculator size={15} /> CareGP ROI Modeler
                 </button>
 
                 <button 
                   onClick={() => setActiveTab('clinics')}
-                  class={`px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  class={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
                     activeTab === 'clinics' 
-                      ? 'border-emerald-500 text-emerald-400 bg-slate-900/50' 
-                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                      ? 'border-[#0066ff] text-[#0066ff] dark:text-[#388eff] bg-[#0066ff]/5 dark:bg-[#0066ff]/10' 
+                      : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
-                  <Building2 size={14} /> Clinics Directory ({filteredClinics.length})
+                  <Building2 size={15} /> Clinics Directory ({filteredClinics.length})
                 </button>
 
               </div>
@@ -578,7 +640,7 @@
                 <select 
                   value={statusFilter} 
                   onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-                  class="h-7 px-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 focus:outline-none focus:border-emerald-500"
+                  class="h-7.5 px-2.5 rounded-lg bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#0066ff]"
                 >
                   <option value="All">All Statuses ({summary.totalClinics})</option>
                   <option value="Closed">Closed ({summary.closedCount})</option>
@@ -590,7 +652,7 @@
                 <select 
                   value={gpSizeFilter} 
                   onChange={(e) => { setGpSizeFilter(e.target.value); setPage(1); }}
-                  class="h-7 px-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 focus:outline-none focus:border-emerald-500"
+                  class="h-7.5 px-2.5 rounded-lg bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#0066ff]"
                 >
                   <option value="All">All GP Sizes</option>
                   <option value="small">Small (1-5 GPs)</option>
@@ -606,69 +668,137 @@
                 
                 {/* 4 CORE HIGHLIGHT CARDS FROM GOOGLE SHEET */}
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-                    <div class="flex items-center justify-between text-slate-400 text-xs font-medium uppercase tracking-wider mb-1">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm">
+                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
                       <span>Total Financial Savings</span>
-                      <DollarSign class="text-emerald-400" size={18} />
+                      <DollarSign class="text-[#00d2a0]" size={18} />
                     </div>
-                    <div class="text-2xl font-bold text-slate-100 numeric">
+                    <div class="text-2xl font-bold text-slate-900 dark:text-white numeric">
                       ${Math.round(summary.totalFinancialSavings).toLocaleString()}
                     </div>
-                    <div class="text-xs text-emerald-400 mt-2 flex items-center gap-1">
+                    <div class="text-xs text-[#00d2a0] mt-2 flex items-center gap-1 font-semibold">
                       <ArrowUpRight size={14} /> +${Math.round(summary.totalFinancialSavings / (summary.closedCount || 1)).toLocaleString()} per closed clinic
                     </div>
                   </div>
 
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-                    <div class="flex items-center justify-between text-slate-400 text-xs font-medium uppercase tracking-wider mb-1">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm">
+                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
                       <span>Hours Reclaimed</span>
-                      <Clock class="text-blue-400" size={18} />
+                      <Clock class="text-[#0066ff]" size={18} />
                     </div>
-                    <div class="text-2xl font-bold text-slate-100 numeric">
-                      {Math.round(summary.totalHoursSaved).toLocaleString()} <span class="text-sm text-slate-400">hrs</span>
+                    <div class="text-2xl font-bold text-slate-900 dark:text-white numeric">
+                      {Math.round(summary.totalHoursSaved).toLocaleString()} <span class="text-sm font-normal text-slate-500 dark:text-slate-400">hrs</span>
                     </div>
-                    <div class="text-xs text-slate-400 mt-2">
+                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-2">
                       across {summary.totalGps} General Practitioners
                     </div>
                   </div>
 
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-                    <div class="flex items-center justify-between text-slate-400 text-xs font-medium uppercase tracking-wider mb-1">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm">
+                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
                       <span>Doc Allocations / Uploads</span>
-                      <FileText class="text-teal-400" size={18} />
+                      <FileText class="text-[#00a3ff]" size={18} />
                     </div>
-                    <div class="text-2xl font-bold text-slate-100 numeric">
+                    <div class="text-2xl font-bold text-slate-900 dark:text-white numeric">
                       {(summary.totalUploads/1000).toFixed(1)}k / {(summary.totalAllocations/1000).toFixed(1)}k
                     </div>
-                    <div class="text-xs text-teal-400 mt-2">
+                    <div class="text-xs text-[#00a3ff] font-semibold mt-2">
                       {summary.avgUploaderPct.toFixed(1)}% average uploader adoption
                     </div>
                   </div>
 
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-                    <div class="flex items-center justify-between text-slate-400 text-xs font-medium uppercase tracking-wider mb-1">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm">
+                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
                       <span>Live Practices & AI Precision</span>
-                      <Building2 class="text-indigo-400" size={18} />
+                      <Building2 class="text-purple-500 dark:text-purple-400" size={18} />
                     </div>
-                    <div class="text-2xl font-bold text-slate-100 numeric">
-                      {summary.closedCount} <span class="text-sm font-normal text-slate-400">/ {summary.totalClinics} clinics</span>
+                    <div class="text-2xl font-bold text-slate-900 dark:text-white numeric">
+                      {summary.closedCount} <span class="text-sm font-normal text-slate-500 dark:text-slate-400">/ {summary.totalClinics} clinics</span>
                     </div>
-                    <div class="text-xs text-indigo-400 mt-2">
+                    <div class="text-xs text-purple-600 dark:text-purple-400 font-semibold mt-2">
                       {summary.avgAccuracyOverall.toFixed(1)}% L1-L4 extraction precision
                     </div>
+                  </div>
+                </div>
+
+                {/* CAREGP 3 AGENT SUITE BANNER */}
+                <div class="bg-gradient-to-r from-[#001a35] via-[#0f1c33] to-[#001a35] border border-[#003d80] dark:border-[#1a2e4f] rounded-2xl p-6 text-white shadow-xl">
+                  <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                    <div>
+                      <span class="text-[11px] font-bold uppercase tracking-wider text-[#00d2a0] bg-[#00d2a0]/20 px-2.5 py-1 rounded border border-[#00d2a0]/30">
+                        Multi-Agent Strategy
+                      </span>
+                      <h3 class="text-xl font-bold text-white mt-2">The CareGP AI Medical Agent Ecosystem</h3>
+                      <p class="text-xs text-slate-300 max-w-2xl mt-1">
+                        Three specialized AI agents working inside Australian General Practice to eliminate admin drag, accelerate clinical notes, and optimize MBS billing item codes.
+                      </p>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-2xl font-black text-[#00d2a0]">{ret.agentAttachRate}</div>
+                      <div class="text-xs text-slate-300">Avg Agent Attach Rate</div>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    
+                    <div class="bg-[#000c1c] p-4 rounded-xl border border-[#0066ff]/40 space-y-2">
+                      <div class="flex items-center justify-between">
+                        <span class="font-bold text-[#388eff] text-sm flex items-center gap-1.5">
+                          <FileText size={16} /> Documents Agent
+                        </span>
+                        <span class="text-[11px] font-bold text-white bg-[#0066ff]/30 px-2 py-0.5 rounded">100% Active</span>
+                      </div>
+                      <p class="text-slate-300 text-[11px]">
+                        Medical inbox, discharge summaries, specialist letters & consult note auto-extractions.
+                      </p>
+                      <div class="text-[11px] font-semibold text-[#00d2a0]">
+                        ⚡ {ops.avgAutomationRatePct}% Automation Rate
+                      </div>
+                    </div>
+
+                    <div class="bg-[#000c1c] p-4 rounded-xl border border-[#00d2a0]/40 space-y-2">
+                      <div class="flex items-center justify-between">
+                        <span class="font-bold text-[#00d2a0] text-sm flex items-center gap-1.5">
+                          <Mic size={16} /> Voice Agent
+                        </span>
+                        <span class="text-[11px] font-bold text-white bg-[#00d2a0]/30 px-2 py-0.5 rounded">62.5% Active</span>
+                      </div>
+                      <p class="text-slate-300 text-[11px]">
+                        Ambient GP consultation scribing, clinical dictation & phone triage workflow automation.
+                      </p>
+                      <div class="text-[11px] font-semibold text-[#00d2a0]">
+                        ⏱️ Saves 15-20s per consultation
+                      </div>
+                    </div>
+
+                    <div class="bg-[#000c1c] p-4 rounded-xl border border-purple-500/40 space-y-2">
+                      <div class="flex items-center justify-between">
+                        <span class="font-bold text-purple-400 text-sm flex items-center gap-1.5">
+                          <Receipt size={16} /> Billing Agent
+                        </span>
+                        <span class="text-[11px] font-bold text-white bg-purple-500/30 px-2 py-0.5 rounded">38.4% Active</span>
+                      </div>
+                      <p class="text-slate-300 text-[11px]">
+                        MBS item code optimizer, Medicare claim validation & patient co-payment collections.
+                      </p>
+                      <div class="text-[11px] font-semibold text-purple-300">
+                        💳 Accelerates DSO to 12.5 days
+                      </div>
+                    </div>
+
                   </div>
                 </div>
 
                 {/* CHARTS ROW 1 */}
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Top 10 Clinics */}
-                  <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-5">
+                  <div class="lg:col-span-2 bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
                       <div>
-                        <h3 class="text-sm font-bold text-slate-100">Top Clinics by Financial ROI ($)</h3>
-                        <p class="text-xs text-slate-400">Value of GP admin time saved in dollar terms</p>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Top Medical Practices by Financial ROI ($)</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Value of GP admin hours saved in dollar terms</p>
                       </div>
-                      <span class="text-xs font-semibold px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded border border-emerald-500/20">
+                      <span class="text-xs font-bold px-2.5 py-1 bg-[#00d2a0]/15 text-[#00d2a0] rounded-full border border-[#00d2a0]/30">
                         Top 10 Leaders
                       </span>
                     </div>
@@ -676,25 +806,25 @@
                     <div class="h-64 w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={topSavingsChartData} margin={{ top: 10, right: 10, left: 10, bottom: 25 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                          <XAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} angle={-25} textAnchor="end" />
-                          <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
+                          <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#1a2e4f" : "#e2e8f0"} vertical={false} />
+                          <XAxis dataKey="name" stroke={isDarkMode ? "#94a3b8" : "#64748b"} fontSize={10} tickLine={false} angle={-25} textAnchor="end" />
+                          <YAxis stroke={isDarkMode ? "#94a3b8" : "#64748b"} fontSize={10} tickLine={false} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
                           <Tooltip 
-                            contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }}
+                            contentStyle={{ backgroundColor: isDarkMode ? '#0f1c33' : '#ffffff', borderColor: isDarkMode ? '#1a2e4f' : '#e2e8f0', borderRadius: '8px', fontSize: '12px', color: isDarkMode ? '#ffffff' : '#0f172a' }}
                             formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Savings ($)']}
                             labelFormatter={(label, payload) => payload[0]?.payload?.fullName || label}
                           />
-                          <Bar dataKey="savings" fill="#10b981" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="savings" fill="#00d2a0" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
 
                   {/* 3-Agent Adoption Distribution */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col justify-between">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm flex flex-col justify-between">
                     <div>
-                      <h3 class="text-sm font-bold text-slate-100">CareGP 3-Agent Adoption Matrix</h3>
-                      <p class="text-xs text-slate-400">Documents, Voice & Billing multi-agent expansion</p>
+                      <h3 class="text-sm font-bold text-slate-900 dark:text-white">CareGP Multi-Agent Adoption</h3>
+                      <p class="text-xs text-slate-500 dark:text-slate-400">Documents, Voice & Billing agent distribution</p>
                     </div>
 
                     <div class="h-52 w-full my-2">
@@ -713,29 +843,29 @@
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                           </Pie>
-                          <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }} />
+                          <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#0f1c33' : '#ffffff', borderColor: isDarkMode ? '#1a2e4f' : '#e2e8f0', borderRadius: '8px', fontSize: '12px' }} />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
 
                     <div class="space-y-1.5 text-xs">
-                      <div class="flex items-center justify-between p-2 bg-slate-950 rounded border border-slate-800">
-                        <span class="flex items-center gap-2 text-slate-300">
+                      <div class="flex items-center justify-between p-2 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                        <span class="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
                           <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> 3-Agent Full Suite
                         </span>
-                        <span class="font-bold text-purple-400">{ret.agentDistribution.triAgent} Clinics</span>
+                        <span class="font-bold text-purple-600 dark:text-purple-400">{ret.agentDistribution.triAgent} Clinics</span>
                       </div>
-                      <div class="flex items-center justify-between p-2 bg-slate-950 rounded border border-slate-800">
-                        <span class="flex items-center gap-2 text-slate-300">
-                          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> 2-Agent Expanded
+                      <div class="flex items-center justify-between p-2 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                        <span class="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
+                          <span class="w-2.5 h-2.5 rounded-full bg-[#00d2a0]"></span> 2-Agent Expanded
                         </span>
-                        <span class="font-bold text-emerald-400">{ret.agentDistribution.dualAgent} Clinics</span>
+                        <span class="font-bold text-[#00d2a0]">{ret.agentDistribution.dualAgent} Clinics</span>
                       </div>
-                      <div class="flex items-center justify-between p-2 bg-slate-950 rounded border border-slate-800">
-                        <span class="flex items-center gap-2 text-slate-300">
-                          <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> 1-Agent Core
+                      <div class="flex items-center justify-between p-2 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                        <span class="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
+                          <span class="w-2.5 h-2.5 rounded-full bg-[#0066ff]"></span> 1-Agent Core
                         </span>
-                        <span class="font-bold text-blue-400">{ret.agentDistribution.singleAgent} Clinics</span>
+                        <span class="font-bold text-[#0066ff]">{ret.agentDistribution.singleAgent} Clinics</span>
                       </div>
                     </div>
                   </div>
@@ -749,16 +879,16 @@
               <div class="space-y-6">
                 
                 {/* Overview Header */}
-                <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 flex items-start justify-between flex-wrap gap-4">
+                <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm flex items-start justify-between flex-wrap gap-4">
                   <div>
-                    <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
-                      <TrendingUp size={18} class="text-emerald-400" /> 3. Retention & Expansion Intelligence
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <TrendingUp size={18} class="text-[#00d2a0]" /> 3. Retention & Expansion Intelligence
                     </h3>
-                    <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
                       Tracking cohort expansion, churn, agent cross-sell, and gross vs net revenue retention across CareGP's 3 AI agents (Documents, Voice, Billing).
                     </p>
                   </div>
-                  <div class="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-300">
+                  <div class="px-3 py-1.5 rounded-lg bg-[#0066ff]/15 border border-[#0066ff]/30 text-xs font-bold text-[#0066ff] dark:text-[#388eff]">
                     Pricing Bracket: {ret.pricingTierBracket}
                   </div>
                 </div>
@@ -767,104 +897,104 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   
                   {/* 3.1 NRR Card */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
                     <div class="flex items-center justify-between">
-                      <span class="text-xs font-bold uppercase tracking-wider text-slate-400">3.1 Net Revenue Retention (NRR)</span>
-                      <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">3.1 Net Revenue Retention (NRR)</span>
+                      <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#00d2a0]/15 text-[#00d2a0] border border-[#00d2a0]/30">
                         {ret.nrr}% NRR
                       </span>
                     </div>
 
-                    <div class="text-3xl font-bold text-slate-100 numeric">
+                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
                       {ret.nrr}%
                     </div>
 
-                    <div class="space-y-2 text-xs border-t border-slate-800 pt-3">
+                    <div class="space-y-2 text-xs border-t border-slate-200 dark:border-[#1a2e4f] pt-3">
                       <div class="flex justify-between">
-                        <span class="text-slate-400">Start ARR (12 mo ago):</span>
-                        <span class="font-bold text-slate-200">${ret.startArr.toLocaleString()}</span>
+                        <span class="text-slate-500 dark:text-slate-400">Start ARR (12 mo ago):</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">${ret.startArr.toLocaleString()}</span>
                       </div>
                       <div class="flex justify-between">
-                        <span class="text-emerald-400">+ Expansion Revenue:</span>
-                        <span class="font-bold text-emerald-400">+${ret.expansionArr.toLocaleString()}</span>
+                        <span class="text-[#00d2a0] font-semibold">+ Expansion Revenue:</span>
+                        <span class="font-bold text-[#00d2a0]">+${ret.expansionArr.toLocaleString()}</span>
                       </div>
                       <div class="flex justify-between">
-                        <span class="text-rose-400">− Churn Revenue:</span>
-                        <span class="font-bold text-rose-400">−${ret.churnArr.toLocaleString()}</span>
+                        <span class="text-rose-500 font-semibold">− Churn Revenue:</span>
+                        <span class="font-bold text-rose-500">−${ret.churnArr.toLocaleString()}</span>
                       </div>
                       <div class="flex justify-between">
-                        <span class="text-amber-400">− Downgrade Revenue:</span>
-                        <span class="font-bold text-amber-400">−${ret.downgradeArr.toLocaleString()}</span>
+                        <span class="text-amber-500 font-semibold">− Downgrade Revenue:</span>
+                        <span class="font-bold text-amber-500">−${ret.downgradeArr.toLocaleString()}</span>
                       </div>
                     </div>
 
-                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-[11px] text-slate-400">
+                    <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
                       💡 <strong>Industry Benchmark:</strong> AI products under $50/mo average 32% NRR; at $250+/mo, enterprise SaaS averages ~85%–110%+. CareGP sits firmly in the high-retention enterprise bracket.
                     </div>
                   </div>
 
                   {/* 3.2 GRR Card */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
                     <div class="flex items-center justify-between">
-                      <span class="text-xs font-bold uppercase tracking-wider text-slate-400">3.2 Gross Revenue Retention (GRR)</span>
-                      <span class="px-2 py-0.5 rounded text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                      <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">3.2 Gross Revenue Retention (GRR)</span>
+                      <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#0066ff]/15 text-[#0066ff] dark:text-[#388eff] border border-[#0066ff]/30">
                         {ret.grr}% GRR
                       </span>
                     </div>
 
-                    <div class="text-3xl font-bold text-slate-100 numeric">
+                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
                       {ret.grr}%
                     </div>
 
-                    <div class="space-y-2 text-xs border-t border-slate-800 pt-3">
+                    <div class="space-y-2 text-xs border-t border-slate-200 dark:border-[#1a2e4f] pt-3">
                       <div class="flex justify-between">
-                        <span class="text-slate-400">Healthy Floor Threshold:</span>
-                        <span class="font-bold text-emerald-400">&ge; 85.0%</span>
+                        <span class="text-slate-500 dark:text-slate-400">Healthy Floor Threshold:</span>
+                        <span class="font-bold text-[#00d2a0]">&ge; 85.0%</span>
                       </div>
                       <div class="flex justify-between">
-                        <span class="text-slate-400">Gross Churn & Contraction:</span>
-                        <span class="font-bold text-rose-400">10.4%</span>
+                        <span class="text-slate-500 dark:text-slate-400">Gross Churn & Contraction:</span>
+                        <span class="font-bold text-rose-500">10.4%</span>
                       </div>
                       <div class="flex justify-between">
-                        <span class="text-slate-400">Cap Threshold:</span>
-                        <span class="font-bold text-slate-300">100% Max</span>
+                        <span class="text-slate-500 dark:text-slate-400">Cap Threshold:</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-300">100% Max</span>
                       </div>
                     </div>
 
-                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-[11px] text-slate-400">
+                    <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
                       🛡️ High GRR ensures upsells are genuine expansion rather than masking a leaky customer base.
                     </div>
                   </div>
 
                   {/* 3.3 Logo Churn Rate */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
                     <div class="flex items-center justify-between">
-                      <span class="text-xs font-bold uppercase tracking-wider text-slate-400">3.3 Logo Churn Rate</span>
-                      <span class="px-2 py-0.5 rounded text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                      <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">3.3 Logo Churn Rate</span>
+                      <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/15 text-rose-500 border border-rose-500/30">
                         {ret.logoChurnRate}% Churn
                       </span>
                     </div>
 
-                    <div class="text-3xl font-bold text-slate-100 numeric">
+                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
                       {ret.logoChurnRate}%
                     </div>
 
-                    <div class="space-y-2 text-xs border-t border-slate-800 pt-3">
+                    <div class="space-y-2 text-xs border-t border-slate-200 dark:border-[#1a2e4f] pt-3">
                       <div class="flex justify-between">
-                        <span class="text-slate-400">Dropped Off Clinics:</span>
-                        <span class="font-bold text-rose-400">{summary.droppedOffCount} clinics</span>
+                        <span class="text-slate-500 dark:text-slate-400">Dropped Off Clinics:</span>
+                        <span class="font-bold text-rose-500">{summary.droppedOffCount} clinics</span>
                       </div>
                       <div class="flex justify-between">
-                        <span class="text-slate-400">Active Base:</span>
-                        <span class="font-bold text-slate-200">{summary.totalClinics - summary.droppedOffCount} clinics</span>
+                        <span class="text-slate-500 dark:text-slate-400">Active Base:</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">{summary.totalClinics - summary.droppedOffCount} clinics</span>
                       </div>
                       <div class="flex justify-between">
-                        <span class="text-slate-400">Revenue Impact vs Logo Impact:</span>
-                        <span class="font-bold text-amber-400">2-GP vs 40-GP Delta</span>
+                        <span class="text-slate-500 dark:text-slate-400">Revenue Impact vs Logo Impact:</span>
+                        <span class="font-bold text-amber-500">2-GP vs 40-GP Delta</span>
                       </div>
                     </div>
 
-                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-[11px] text-slate-400">
+                    <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
                       ⚖️ Tracked separately from revenue churn: losing a 2-GP practice counts as 1 logo, but losing a 40-GP practice has 20x the ARR impact.
                     </div>
                   </div>
@@ -875,74 +1005,74 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   
                   {/* 3.4 Agent Attach Rate Detail */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
                     <div class="flex items-center justify-between">
                       <div>
-                        <h4 class="text-sm font-bold text-slate-100">3.4 Agent Attach Rate & Distribution</h4>
-                        <p class="text-xs text-slate-400">Average CareGP Agents adopted per active clinic</p>
+                        <h4 class="text-sm font-bold text-slate-900 dark:text-white">3.4 Agent Attach Rate & Distribution</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Average CareGP Agents adopted per active clinic</p>
                       </div>
-                      <span class="px-3 py-1 rounded bg-teal-500/20 text-teal-300 font-bold text-sm">
+                      <span class="px-3 py-1 rounded-full bg-[#00a3ff]/15 text-[#00a3ff] font-bold text-sm border border-[#00a3ff]/30">
                         {ret.agentAttachRate} / 3.0
                       </span>
                     </div>
 
                     <div class="grid grid-cols-3 gap-3 text-center text-xs">
-                      <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                        <div class="text-slate-400 mb-1">Documents Agent</div>
-                        <div class="text-base font-bold text-blue-400">100% Adoption</div>
-                        <div class="text-[10px] text-slate-500 mt-1">Core Document AI</div>
+                      <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                        <div class="text-slate-500 dark:text-slate-400 mb-1">Documents Agent</div>
+                        <div class="text-base font-bold text-[#0066ff]">100% Adoption</div>
+                        <div class="text-[10px] text-slate-400 mt-1">Core Document AI</div>
                       </div>
-                      <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                        <div class="text-slate-400 mb-1">Voice Agent</div>
-                        <div class="text-base font-bold text-emerald-400">62.5% Adoption</div>
-                        <div class="text-[10px] text-slate-500 mt-1">Scribe & Consultation</div>
+                      <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                        <div class="text-slate-500 dark:text-slate-400 mb-1">Voice Agent</div>
+                        <div class="text-base font-bold text-[#00d2a0]">62.5% Adoption</div>
+                        <div class="text-[10px] text-slate-400 mt-1">Scribe & Consult</div>
                       </div>
-                      <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                        <div class="text-slate-400 mb-1">Billing Agent</div>
-                        <div class="text-base font-bold text-purple-400">38.4% Adoption</div>
-                        <div class="text-[10px] text-slate-500 mt-1">Claims & Revenue</div>
+                      <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                        <div class="text-slate-500 dark:text-slate-400 mb-1">Billing Agent</div>
+                        <div class="text-base font-bold text-purple-500 dark:text-purple-400">38.4% Adoption</div>
+                        <div class="text-[10px] text-slate-400 mt-1">Claims & Items</div>
                       </div>
                     </div>
 
-                    <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 text-xs text-slate-300 space-y-1">
-                      <div class="font-semibold text-slate-200">Expansion Pipeline Strategy:</div>
-                      <p class="text-slate-400 text-[11px]">
+                    <div class="p-3 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-xs text-slate-700 dark:text-slate-300 space-y-1">
+                      <div class="font-bold text-slate-900 dark:text-white">Expansion Pipeline Strategy:</div>
+                      <p class="text-slate-500 dark:text-slate-400 text-[11px]">
                         Multi-agent adoption is the #1 driver of net retention. Clinics using 2+ agents churn at less than 1.5% annually.
                       </p>
                     </div>
                   </div>
 
                   {/* 3.5 Expansion MRR Detail */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
                     <div class="flex items-center justify-between">
                       <div>
-                        <h4 class="text-sm font-bold text-slate-100">3.5 Expansion MRR & Growth Quality</h4>
-                        <p class="text-xs text-slate-400">Additional monthly revenue from existing customer accounts</p>
+                        <h4 class="text-sm font-bold text-slate-900 dark:text-white">3.5 Expansion MRR & Growth Quality</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Additional monthly revenue from existing customer accounts</p>
                       </div>
-                      <span class="px-3 py-1 rounded bg-emerald-500/20 text-emerald-300 font-bold text-sm">
+                      <span class="px-3 py-1 rounded-full bg-[#00d2a0]/15 text-[#00d2a0] font-bold text-sm border border-[#00d2a0]/30">
                         ${ret.expansionMrr.toLocaleString()} / mo
                       </span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3 text-xs">
-                      <div class="bg-slate-950 p-4 rounded-lg border border-slate-800">
-                        <div class="text-slate-400">Expansion MRR ($)</div>
-                        <div class="text-2xl font-bold text-emerald-400 numeric mt-1">
+                      <div class="bg-slate-50 dark:bg-[#060c18] p-4 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                        <div class="text-slate-500 dark:text-slate-400 font-medium">Expansion MRR ($)</div>
+                        <div class="text-2xl font-bold text-[#00d2a0] numeric mt-1">
                           ${ret.expansionMrr.toLocaleString()}
                         </div>
-                        <div class="text-[11px] text-slate-500 mt-1">+${(ret.expansionMrr * 12).toLocaleString()} annualized</div>
+                        <div class="text-[11px] text-slate-400 mt-1">+${(ret.expansionMrr * 12).toLocaleString()} annualized</div>
                       </div>
 
-                      <div class="bg-slate-950 p-4 rounded-lg border border-slate-800">
-                        <div class="text-slate-400">% of Total New MRR</div>
-                        <div class="text-2xl font-bold text-purple-400 numeric mt-1">
+                      <div class="bg-slate-50 dark:bg-[#060c18] p-4 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                        <div class="text-slate-500 dark:text-slate-400 font-medium">% of Total New MRR</div>
+                        <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 numeric mt-1">
                           {ret.expansionPctOfNewMrr}%
                         </div>
-                        <div class="text-[11px] text-slate-500 mt-1">high-margin expansion efficiency</div>
+                        <div class="text-[11px] text-slate-400 mt-1">high-margin expansion efficiency</div>
                       </div>
                     </div>
 
-                    <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 text-xs text-slate-400">
+                    <div class="p-3 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-xs text-slate-600 dark:text-slate-400">
                       ⚡ <strong>Expansion Drivers:</strong> GP seat expansion (+35%), Voice agent add-on (+45%), Billing agent add-on (+20%).
                     </div>
                   </div>
@@ -957,11 +1087,11 @@
               <div class="space-y-6">
                 
                 {/* Section Header */}
-                <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-                  <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
-                    <Flame size={18} class="text-amber-400" /> 4. Efficiency & Financial Health Metrics
+                <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm">
+                  <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Flame size={18} class="text-amber-500 dark:text-amber-400" /> 4. Efficiency & Financial Health Metrics
                   </h3>
-                  <p class="text-xs text-slate-400 mt-1">
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Evaluating capital efficiency, burn velocity, Rule of 40 performance, and S&M conversion parameters.
                   </p>
                 </div>
@@ -970,175 +1100,175 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   
                   {/* 4.1 Burn Multiple */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       <span>4.1 Burn Multiple</span>
-                      <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      <span class="px-2.5 py-0.5 rounded-full bg-[#00d2a0]/15 text-[#00d2a0] border border-[#00d2a0]/30 font-bold">
                         {eff.burnMultiple}x
                       </span>
                     </div>
 
-                    <div class="text-3xl font-bold text-slate-100 numeric">
+                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
                       {eff.burnMultiple}x
                     </div>
 
-                    <div class="space-y-1.5 text-xs text-slate-400 border-t border-slate-800 pt-2">
+                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
                       <div class="flex justify-between">
                         <span>Net Annual Cash Burn:</span>
-                        <span class="font-bold text-slate-200">${eff.annualBurn.toLocaleString()}</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">${eff.annualBurn.toLocaleString()}</span>
                       </div>
                       <div class="flex justify-between">
                         <span>Net New ARR Generated:</span>
-                        <span class="font-bold text-emerald-400">${eff.netNewArrAnnualized.toLocaleString()}</span>
+                        <span class="font-bold text-[#00d2a0]">${eff.netNewArrAnnualized.toLocaleString()}</span>
                       </div>
                     </div>
 
-                    <div class="p-2.5 bg-slate-950 rounded border border-slate-800 text-[11px] text-slate-400">
+                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
                       📊 Series A AI Median: ~5.0x. CareGP's {eff.burnMultiple}x efficiency sits in the top 10% of venture-backed AI startups.
                     </div>
                   </div>
 
                   {/* 4.2 Rule of 40 */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       <span>4.2 Rule of 40 Score</span>
-                      <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                      <span class="px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 font-bold">
                         Target &ge; 40
                       </span>
                     </div>
 
-                    <div class="text-3xl font-bold text-purple-400 numeric">
+                    <div class="text-3xl font-bold text-purple-600 dark:text-purple-400 numeric">
                       +{eff.ruleOf40Score}
                     </div>
 
-                    <div class="space-y-1.5 text-xs text-slate-400 border-t border-slate-800 pt-2">
+                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
                       <div class="flex justify-between">
                         <span>YoY ARR Growth Rate:</span>
-                        <span class="font-bold text-emerald-400">+{eff.yoyArrGrowthPct}%</span>
+                        <span class="font-bold text-[#00d2a0]">+{eff.yoyArrGrowthPct}%</span>
                       </div>
                       <div class="flex justify-between">
                         <span>Operating Margin %:</span>
-                        <span class="font-bold text-amber-400">{eff.operatingMarginPct}%</span>
+                        <span class="font-bold text-amber-500">{eff.operatingMarginPct}%</span>
                       </div>
                     </div>
 
-                    <div class="p-2.5 bg-slate-950 rounded border border-slate-800 text-[11px] text-slate-400">
+                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
                       🎯 Score = YoY ARR Growth % + Operating Margin %. Score &gt;40 indicates top-tier SaaS financial health.
                     </div>
                   </div>
 
                   {/* 4.3 Runway */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       <span>4.3 Runway</span>
-                      <span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                      <span class="px-2.5 py-0.5 rounded-full bg-[#0066ff]/15 text-[#0066ff] dark:text-[#388eff] border border-[#0066ff]/30 font-bold">
                         {eff.runwayMonths} Months
                       </span>
                     </div>
 
-                    <div class="text-3xl font-bold text-slate-100 numeric">
-                      {eff.runwayMonths} <span class="text-sm font-normal text-slate-400">months</span>
+                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
+                      {eff.runwayMonths} <span class="text-sm font-normal text-slate-500 dark:text-slate-400">months</span>
                     </div>
 
-                    <div class="space-y-1.5 text-xs text-slate-400 border-t border-slate-800 pt-2">
+                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
                       <div class="flex justify-between">
                         <span>Current Cash Balance:</span>
-                        <span class="font-bold text-slate-200">${eff.cashBalance.toLocaleString()}</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">${eff.cashBalance.toLocaleString()}</span>
                       </div>
                       <div class="flex justify-between">
                         <span>Avg Monthly Net Burn:</span>
-                        <span class="font-bold text-rose-400">${eff.netCashBurnMonthly.toLocaleString()} / mo</span>
+                        <span class="font-bold text-rose-500">${eff.netCashBurnMonthly.toLocaleString()} / mo</span>
                       </div>
                     </div>
 
-                    <div class="p-2.5 bg-slate-950 rounded border border-slate-800 text-[11px] text-slate-400">
+                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
                       ⏳ Recalculated trailing 3-month average burn provides clear visibility into capital requirement dates.
                     </div>
                   </div>
 
                   {/* 4.4 Free Cash Flow / Operating Margin */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       <span>4.4 FCF & Operating Margin</span>
-                      <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                      <span class="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-bold">
                         {eff.fcfMarginPct}% FCF
                       </span>
                     </div>
 
-                    <div class="text-3xl font-bold text-slate-100 numeric">
+                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
                       {eff.fcfMarginPct}%
                     </div>
 
-                    <div class="space-y-1.5 text-xs text-slate-400 border-t border-slate-800 pt-2">
+                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
                       <div class="flex justify-between">
                         <span>Operating Margin:</span>
-                        <span class="font-bold text-amber-400">{eff.operatingMarginPct}%</span>
+                        <span class="font-bold text-amber-500">{eff.operatingMarginPct}%</span>
                       </div>
                       <div class="flex justify-between">
                         <span>Gross Margin (Software):</span>
-                        <span class="font-bold text-emerald-400">78.5%</span>
+                        <span class="font-bold text-[#00d2a0]">78.5%</span>
                       </div>
                     </div>
 
-                    <div class="p-2.5 bg-slate-950 rounded border border-slate-800 text-[11px] text-slate-400">
+                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
                       💵 FCF tracks whether the business model sustains itself without external fundraising drag.
                     </div>
                   </div>
 
                   {/* 4.5 Magic Number */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       <span>4.5 Magic Number</span>
-                      <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      <span class="px-2.5 py-0.5 rounded-full bg-[#00d2a0]/15 text-[#00d2a0] border border-[#00d2a0]/30 font-bold">
                         {eff.magicNumber}
                       </span>
                     </div>
 
-                    <div class="text-3xl font-bold text-emerald-400 numeric">
+                    <div class="text-3xl font-bold text-[#00d2a0] numeric">
                       {eff.magicNumber}
                     </div>
 
-                    <div class="space-y-1.5 text-xs text-slate-400 border-t border-slate-800 pt-2">
+                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
                       <div class="flex justify-between">
                         <span>Annualized QoQ Delta ARR:</span>
-                        <span class="font-bold text-slate-200">${(eff.netNewArrAnnualized).toLocaleString()}</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">${(eff.netNewArrAnnualized).toLocaleString()}</span>
                       </div>
                       <div class="flex justify-between">
                         <span>Prior-Quarter S&M Spend:</span>
-                        <span class="font-bold text-slate-200">${eff.priorQuarterSmSpend.toLocaleString()}</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">${eff.priorQuarterSmSpend.toLocaleString()}</span>
                       </div>
                     </div>
 
-                    <div class="p-2.5 bg-slate-950 rounded border border-slate-800 text-[11px] text-slate-400">
+                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
                       🚀 Above 0.75: Strong efficiency — keep investing aggressively in sales & marketing channels.
                     </div>
                   </div>
 
                   {/* 4.6 SaaS Quick Ratio */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       <span>4.6 SaaS Quick Ratio</span>
-                      <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                      <span class="px-2.5 py-0.5 rounded-full bg-[#0066ff]/15 text-[#0066ff] dark:text-[#388eff] border border-[#0066ff]/30 font-bold">
                         {eff.saasQuickRatio}x
                       </span>
                     </div>
 
-                    <div class="text-3xl font-bold text-slate-100 numeric">
+                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
                       {eff.saasQuickRatio}x
                     </div>
 
-                    <div class="space-y-1.5 text-xs text-slate-400 border-t border-slate-800 pt-2">
+                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
                       <div class="flex justify-between">
                         <span>New + Expansion MRR:</span>
-                        <span class="font-bold text-emerald-400">+${(ret.newLogoMrr + ret.expansionMrr).toLocaleString()}</span>
+                        <span class="font-bold text-[#00d2a0]">+${(ret.newLogoMrr + ret.expansionMrr).toLocaleString()}</span>
                       </div>
                       <div class="flex justify-between">
                         <span>Churn + Contraction MRR:</span>
-                        <span class="font-bold text-rose-400">−${(eff.churnMrr + eff.contractionMrr).toLocaleString()}</span>
+                        <span class="font-bold text-rose-500">−${(eff.churnMrr + eff.contractionMrr).toLocaleString()}</span>
                       </div>
                     </div>
 
-                    <div class="p-2.5 bg-slate-950 rounded border border-slate-800 text-[11px] text-slate-400">
+                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
                       ⚡ Ratio &gt; 4.0 demonstrates hypergrowth velocity where new revenue far outpaces baseline contraction.
                     </div>
                   </div>
@@ -1152,11 +1282,11 @@
             {activeTab === 'operations' && (
               <div class="space-y-6">
                 
-                <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-                  <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
-                    <Cpu size={18} class="text-teal-400" /> 5. Operational Metrics (Driving Financial Outcomes)
+                <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm">
+                  <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Cpu size={18} class="text-[#00a3ff]" /> 5. Operational Metrics (Driving Financial Outcomes)
                   </h3>
-                  <p class="text-xs text-slate-400 mt-1">
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Leading operational indicators that drive Gross Margin, Customer Retention, and Per-Clinic ROI.
                   </p>
                 </div>
@@ -1164,120 +1294,120 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   
                   {/* 5.1 Task Completion / Automation Rate */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
                     <div class="flex items-center justify-between">
-                      <h4 class="text-sm font-bold text-slate-100">5.1 Task Automation Rate</h4>
-                      <span class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 font-bold text-sm">
+                      <h4 class="text-sm font-bold text-slate-900 dark:text-white">5.1 Task Automation Rate</h4>
+                      <span class="px-3 py-1 rounded-full bg-[#00d2a0]/15 text-[#00d2a0] font-bold text-sm border border-[#00d2a0]/30">
                         {ops.avgAutomationRatePct}%
                       </span>
                     </div>
 
-                    <p class="text-xs text-slate-400">
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
                       Percentage of medical document workflows completed by CareGP agents end-to-end without human GP correction.
                     </p>
 
                     <div class="space-y-2">
                       <div class="flex justify-between text-xs font-semibold">
-                        <span class="text-slate-300">Automated w/o Correction</span>
-                        <span class="text-emerald-400">{ops.avgAutomationRatePct}%</span>
+                        <span class="text-slate-700 dark:text-slate-300">Automated w/o Correction</span>
+                        <span class="text-[#00d2a0]">{ops.avgAutomationRatePct}%</span>
                       </div>
-                      <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
-                        <div class="h-full bg-emerald-500 rounded-full" style={{ width: `${ops.avgAutomationRatePct}%` }}></div>
+                      <div class="w-full h-3 bg-slate-100 dark:bg-[#060c18] rounded-full overflow-hidden border border-slate-200 dark:border-[#1a2e4f]">
+                        <div class="h-full bg-[#00d2a0] rounded-full" style={{ width: `${ops.avgAutomationRatePct}%` }}></div>
                       </div>
                     </div>
 
-                    <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 text-xs text-slate-400">
-                       benchmark: Sohar Health cites 95% automation rate; LunaBill cites 10x claim follow-up throughput per biller.
+                    <div class="p-3 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-xs text-slate-600 dark:text-slate-400">
+                      🏥 Benchmark: Sohar Health cites 95% automation rate; LunaBill cites 10x claim follow-up throughput per biller.
                     </div>
                   </div>
 
                   {/* 5.2 Cycle Time Reduction */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
                     <div class="flex items-center justify-between">
-                      <h4 class="text-sm font-bold text-slate-100">5.2 Cycle Time Reduction</h4>
-                      <span class="px-2.5 py-1 rounded bg-blue-500/20 text-blue-400 font-bold text-sm">
+                      <h4 class="text-sm font-bold text-slate-900 dark:text-white">5.2 Cycle Time Reduction</h4>
+                      <span class="px-3 py-1 rounded-full bg-[#0066ff]/15 text-[#0066ff] dark:text-[#388eff] font-bold text-sm border border-[#0066ff]/30">
                         {ops.avgCycleTimeReductionPct}% Faster
                       </span>
                     </div>
 
-                    <p class="text-xs text-slate-400">
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
                       Time saved per medical document comparing pre-onboarding manual baseline (180s) vs CareGP AI processing time ({summary.avgTimePerDoc.toFixed(1)}s).
                     </p>
 
                     <div class="grid grid-cols-2 gap-3 text-center text-xs">
-                      <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                        <div class="text-slate-400 mb-1">Manual Baseline</div>
-                        <div class="text-lg font-bold text-slate-300">180 sec / doc</div>
+                      <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                        <div class="text-slate-500 dark:text-slate-400 mb-1">Manual Baseline</div>
+                        <div class="text-lg font-bold text-slate-800 dark:text-slate-200">180 sec / doc</div>
                       </div>
-                      <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                        <div class="text-slate-400 mb-1">CareGP Automated</div>
-                        <div class="text-lg font-bold text-emerald-400">{summary.avgTimePerDoc.toFixed(1)} sec / doc</div>
+                      <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                        <div class="text-slate-500 dark:text-slate-400 mb-1">CareGP Automated</div>
+                        <div class="text-lg font-bold text-[#00d2a0]">{summary.avgTimePerDoc.toFixed(1)} sec / doc</div>
                       </div>
                     </div>
                   </div>
 
                   {/* 5.3 Exception Rate & Resolution Time */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
                     <div class="flex items-center justify-between">
-                      <h4 class="text-sm font-bold text-slate-100">5.3 Exception Rate & Breakdown</h4>
-                      <span class="px-2.5 py-1 rounded bg-amber-500/20 text-amber-400 font-bold text-sm">
+                      <h4 class="text-sm font-bold text-slate-900 dark:text-white">5.3 Exception Rate & Breakdown</h4>
+                      <span class="px-3 py-1 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold text-sm border border-amber-500/30">
                         {ops.avgExceptionRatePct}% Exception
                       </span>
                     </div>
 
-                    <p class="text-xs text-slate-400">
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
                       Share of medical documents flagged for human review, categorized by cause:
                     </p>
 
                     <div class="space-y-2 text-xs">
-                      <div class="flex justify-between p-2 bg-slate-950 rounded border border-slate-800">
-                        <span class="text-slate-300">Low-Confidence AI Extractions:</span>
-                        <span class="font-bold text-amber-400">{ops.exceptionBreakdown.lowConfidencePct}%</span>
+                      <div class="flex justify-between p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                        <span class="text-slate-700 dark:text-slate-300 font-medium">Low-Confidence AI Extractions:</span>
+                        <span class="font-bold text-amber-500">{ops.exceptionBreakdown.lowConfidencePct}%</span>
                       </div>
-                      <div class="flex justify-between p-2 bg-slate-950 rounded border border-slate-800">
-                        <span class="text-slate-300">Unusual Document Format:</span>
-                        <span class="font-bold text-amber-400">{ops.exceptionBreakdown.unusualDocPct}%</span>
+                      <div class="flex justify-between p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                        <span class="text-slate-700 dark:text-slate-300 font-medium">Unusual Document Format:</span>
+                        <span class="font-bold text-amber-500">{ops.exceptionBreakdown.unusualDocPct}%</span>
                       </div>
-                      <div class="flex justify-between p-2 bg-slate-950 rounded border border-slate-800">
-                        <span class="text-slate-300">Compliance & Regulatory Flag:</span>
-                        <span class="font-bold text-rose-400">{ops.exceptionBreakdown.complianceFlagPct}%</span>
+                      <div class="flex justify-between p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                        <span class="text-slate-700 dark:text-slate-300 font-medium">Compliance & Regulatory Flag:</span>
+                        <span class="font-bold text-rose-500">{ops.exceptionBreakdown.complianceFlagPct}%</span>
                       </div>
                     </div>
 
-                    <div class="text-xs text-slate-400 flex items-center justify-between pt-1">
+                    <div class="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between pt-1">
                       <span>Avg Compliance Resolution Time:</span>
-                      <span class="font-bold text-slate-200">{ops.complianceResolutionTimeMin} minutes</span>
+                      <span class="font-bold text-slate-800 dark:text-slate-200">{ops.complianceResolutionTimeMin} minutes</span>
                     </div>
                   </div>
 
                   {/* 5.4 Per-Clinic ROI vs CareGP Unit Cost */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
                     <div class="flex items-center justify-between">
-                      <h4 class="text-sm font-bold text-slate-100">5.4 Per-Clinic ROI vs CareGP Cost</h4>
-                      <span class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 font-bold text-sm">
+                      <h4 class="text-sm font-bold text-slate-900 dark:text-white">5.4 Per-Clinic ROI vs CareGP Cost</h4>
+                      <span class="px-3 py-1 rounded-full bg-[#00d2a0]/15 text-[#00d2a0] font-bold text-sm border border-[#00d2a0]/30">
                         Unit COGS: ${ops.careGpCostPerDocUnit}/doc
                       </span>
                     </div>
 
-                    <p class="text-xs text-slate-400">
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
                       Cross-checking clinic return against CareGP's internal processing cost to ensure sustainable margin profile.
                     </p>
 
                     <div class="grid grid-cols-2 gap-3 text-xs">
-                      <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                        <div class="text-slate-400">Average Clinic ROI Multiplier</div>
-                        <div class="text-2xl font-bold text-emerald-400 numeric mt-1">
+                      <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                        <div class="text-slate-500 dark:text-slate-400 font-medium">Average Clinic ROI Multiplier</div>
+                        <div class="text-2xl font-bold text-[#00d2a0] numeric mt-1">
                           5.8x ROI
                         </div>
-                        <div class="text-[10px] text-slate-500 mt-1">Dollar savings / subscription cost</div>
+                        <div class="text-[10px] text-slate-400 mt-1">Dollar savings / subscription cost</div>
                       </div>
 
-                      <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                        <div class="text-slate-400">CareGP Processing COGS</div>
-                        <div class="text-2xl font-bold text-purple-400 numeric mt-1">
+                      <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                        <div class="text-slate-500 dark:text-slate-400 font-medium">CareGP Processing COGS</div>
+                        <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 numeric mt-1">
                           ${ops.careGpCostPerDocUnit}
                         </div>
-                        <div class="text-[10px] text-slate-500 mt-1">Per document processed</div>
+                        <div class="text-[10px] text-slate-400 mt-1">Per document processed</div>
                       </div>
                     </div>
                   </div>
@@ -1291,11 +1421,11 @@
             {activeTab === 'strategic' && (
               <div class="space-y-6">
                 
-                <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-                  <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
-                    <Award size={18} class="text-purple-400" /> 6. Additional Strategic & Risk Metrics
+                <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm">
+                  <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Award size={18} class="text-purple-600 dark:text-purple-400" /> 6. Additional Strategic & Risk Metrics
                   </h3>
-                  <p class="text-xs text-slate-400 mt-1">
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Customer sentiment, collection efficiency, time to value, concentration risk, and headcount productivity.
                   </p>
                 </div>
@@ -1303,132 +1433,132 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   
                   {/* 6.1 Net Promoter Score (NPS) */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       <span>6.1 Net Promoter Score (NPS)</span>
-                      <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">
+                      <span class="px-2.5 py-0.5 rounded-full bg-[#00d2a0]/15 text-[#00d2a0] font-bold">
                         +{strat.npsScore}
                       </span>
                     </div>
 
-                    <div class="text-3xl font-bold text-emerald-400 numeric">
+                    <div class="text-3xl font-bold text-[#00d2a0] numeric">
                       +{strat.npsScore}
                     </div>
 
-                    <div class="space-y-1.5 text-xs text-slate-400 border-t border-slate-800 pt-2">
+                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
                       <div class="flex justify-between">
-                        <span class="text-emerald-400">Promoters (9-10):</span>
-                        <span class="font-bold text-emerald-400">{strat.promotersPct}%</span>
+                        <span class="text-[#00d2a0] font-semibold">Promoters (9-10):</span>
+                        <span class="font-bold text-[#00d2a0]">{strat.promotersPct}%</span>
                       </div>
                       <div class="flex justify-between">
-                        <span class="text-rose-400">Detractors (0-6):</span>
-                        <span class="font-bold text-rose-400">{strat.detractorsPct}%</span>
+                        <span class="text-rose-500 font-semibold">Detractors (0-6):</span>
+                        <span class="font-bold text-rose-500">{strat.detractorsPct}%</span>
                       </div>
                     </div>
 
-                    <div class="p-2 bg-slate-950 rounded border border-slate-800 text-[11px] text-slate-400">
+                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
                       💬 Strong NPS across medical practices directly accelerates organic word-of-mouth clinic referrals.
                     </div>
                   </div>
 
                   {/* 6.2 Days Sales Outstanding (DSO) */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       <span>6.2 Days Sales Outstanding (DSO)</span>
-                      <span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">
+                      <span class="px-2.5 py-0.5 rounded-full bg-[#0066ff]/15 text-[#0066ff] dark:text-[#388eff] font-bold">
                         {strat.dsoDays} Days
                       </span>
                     </div>
 
-                    <div class="text-3xl font-bold text-slate-100 numeric">
-                      {strat.dsoDays} <span class="text-sm font-normal text-slate-400">days</span>
+                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
+                      {strat.dsoDays} <span class="text-sm font-normal text-slate-500 dark:text-slate-400">days</span>
                     </div>
 
-                    <div class="text-xs text-slate-400 border-t border-slate-800 pt-2">
+                    <div class="text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
                       Average days to collect payment after invoicing medical practices.
                     </div>
 
-                    <div class="p-2 bg-slate-950 rounded border border-slate-800 text-[11px] text-slate-400">
+                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
                       💳 CareGP's Billing Agent also automates clinics' own patient collections, bringing DSO down network-wide.
                     </div>
                   </div>
 
                   {/* 6.3 Time to Value */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       <span>6.3 Time to Value</span>
-                      <span class="px-2 py-0.5 rounded bg-teal-500/20 text-teal-400 font-bold">
+                      <span class="px-2.5 py-0.5 rounded-full bg-[#00a3ff]/15 text-[#00a3ff] font-bold">
                         {strat.avgTimeToValueDays} Days
                       </span>
                     </div>
 
-                    <div class="text-3xl font-bold text-teal-400 numeric">
-                      {strat.avgTimeToValueDays} <span class="text-sm font-normal text-slate-400">days</span>
+                    <div class="text-3xl font-bold text-[#00a3ff] numeric">
+                      {strat.avgTimeToValueDays} <span class="text-sm font-normal text-slate-500 dark:text-slate-400">days</span>
                     </div>
 
-                    <div class="text-xs text-slate-400 border-t border-slate-800 pt-2">
+                    <div class="text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
                       Time elapsed from contract signature date to first meaningful uploader threshold (&gt;50% docs processed).
                     </div>
 
-                    <div class="p-2 bg-slate-950 rounded border border-slate-800 text-[11px] text-slate-400">
+                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
                       ⏱️ Faster time-to-value directly lowers 90-day pilot drop-off risk.
                     </div>
                   </div>
 
                   {/* 6.4 Concentration Risk */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       <span>6.4 Concentration Risk</span>
-                      <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-bold">
+                      <span class="px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400 font-bold">
                         {strat.top10ConcentrationPct}%
                       </span>
                     </div>
 
-                    <div class="text-3xl font-bold text-slate-100 numeric">
+                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
                       {strat.top10ConcentrationPct}%
                     </div>
 
-                    <div class="space-y-1.5 text-xs text-slate-400 border-t border-slate-800 pt-2">
+                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
                       <div class="flex justify-between">
                         <span>Top 10 Clinics ARR:</span>
-                        <span class="font-bold text-slate-200">${strat.top10ArrSum.toLocaleString()}</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">${strat.top10ArrSum.toLocaleString()}</span>
                       </div>
                       <div class="flex justify-between">
                         <span>Total Live ARR:</span>
-                        <span class="font-bold text-emerald-400">${summary.totalLiveArr.toLocaleString()}</span>
+                        <span class="font-bold text-[#00d2a0]">${summary.totalLiveArr.toLocaleString()}</span>
                       </div>
                     </div>
 
-                    <div class="p-2 bg-slate-950 rounded border border-slate-800 text-[11px] text-slate-400">
+                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
                       🛡️ Concentration under 30% ensures no single clinic group decision poses existential revenue risk.
                     </div>
                   </div>
 
                   {/* 6.5 Revenue per FTE */}
-                  <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       <span>6.5 Revenue per FTE</span>
-                      <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 font-bold">
+                      <span class="px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400 font-bold">
                         ${(strat.revenuePerFte/1000).toFixed(0)}k / FTE
                       </span>
                     </div>
 
-                    <div class="text-3xl font-bold text-purple-400 numeric">
+                    <div class="text-3xl font-bold text-purple-600 dark:text-purple-400 numeric">
                       ${strat.revenuePerFte.toLocaleString()}
                     </div>
 
-                    <div class="space-y-1.5 text-xs text-slate-400 border-t border-slate-800 pt-2">
+                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
                       <div class="flex justify-between">
                         <span>Total Headcount (FTEs):</span>
-                        <span class="font-bold text-slate-200">{strat.totalFte} employees</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">{strat.totalFte} employees</span>
                       </div>
                       <div class="flex justify-between">
                         <span>Live ARR:</span>
-                        <span class="font-bold text-emerald-400">${summary.totalLiveArr.toLocaleString()}</span>
+                        <span class="font-bold text-[#00d2a0]">${summary.totalLiveArr.toLocaleString()}</span>
                       </div>
                     </div>
 
-                    <div class="p-2 bg-slate-950 rounded border border-slate-800 text-[11px] text-slate-400">
+                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
                       👥 A rising revenue per FTE confirms that agent software leverage — not headcount — absorbs growth.
                     </div>
                   </div>
@@ -1443,12 +1573,12 @@
               <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
                 {/* Controls */}
-                <div class="lg:col-span-6 bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-6">
+                <div class="lg:col-span-6 bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-6 shadow-sm space-y-6">
                   <div>
-                    <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
-                      <Calculator class="text-emerald-400" size={18} /> CareGP Interactive Scenario & Sensitivity Modeler
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Calculator class="text-[#0066ff]" size={18} /> CareGP Practice ROI & Financial Modeler
                     </h3>
-                    <p class="text-xs text-slate-400 mt-1">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
                       Adjust practice parameters and financial inputs to calculate live ROI, Runway impact, and multi-agent expansion economics.
                     </p>
                   </div>
@@ -1456,111 +1586,111 @@
                   <div class="space-y-5">
                     <div>
                       <div class="flex justify-between text-xs font-semibold mb-2">
-                        <span class="text-slate-300">GPs in Practice</span>
-                        <span class="text-emerald-400 font-bold">{simGps} GPs</span>
+                        <span class="text-slate-700 dark:text-slate-300">GPs in Practice</span>
+                        <span class="text-[#0066ff] dark:text-[#388eff] font-bold">{simGps} GPs</span>
                       </div>
                       <input 
                         type="range" min="1" max="100" value={simGps} 
                         onChange={(e) => setSimGps(Number(e.target.value))}
-                        class="w-full accent-emerald-500 bg-slate-800 rounded-lg cursor-pointer"
+                        class="w-full accent-[#0066ff] bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer"
                       />
                     </div>
 
                     <div>
                       <div class="flex justify-between text-xs font-semibold mb-2">
-                        <span class="text-slate-300">Daily Documents per GP</span>
-                        <span class="text-emerald-400 font-bold">{simDocsPerGp} docs/day</span>
+                        <span class="text-slate-700 dark:text-slate-300">Daily Documents per GP</span>
+                        <span class="text-[#0066ff] dark:text-[#388eff] font-bold">{simDocsPerGp} docs/day</span>
                       </div>
                       <input 
                         type="range" min="5" max="80" value={simDocsPerGp} 
                         onChange={(e) => setSimDocsPerGp(Number(e.target.value))}
-                        class="w-full accent-emerald-500 bg-slate-800 rounded-lg cursor-pointer"
+                        class="w-full accent-[#0066ff] bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer"
                       />
                     </div>
 
                     <div>
                       <div class="flex justify-between text-xs font-semibold mb-2">
-                        <span class="text-slate-300">GP Hourly Value Rate ($/hr)</span>
-                        <span class="text-emerald-400 font-bold">${simGpRate}/hr</span>
+                        <span class="text-slate-700 dark:text-slate-300">GP Hourly Value Rate ($/hr)</span>
+                        <span class="text-[#0066ff] dark:text-[#388eff] font-bold">${simGpRate}/hr</span>
                       </div>
                       <input 
                         type="range" min="80" max="300" step="5" value={simGpRate} 
                         onChange={(e) => setSimGpRate(Number(e.target.value))}
-                        class="w-full accent-emerald-500 bg-slate-800 rounded-lg cursor-pointer"
+                        class="w-full accent-[#0066ff] bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer"
                       />
                     </div>
 
                     <div>
                       <div class="flex justify-between text-xs font-semibold mb-2">
-                        <span class="text-slate-300">CareGP Time Saved per Doc (seconds)</span>
-                        <span class="text-emerald-400 font-bold">{simTimeSavedSec} seconds</span>
+                        <span class="text-slate-700 dark:text-slate-300">CareGP Time Saved per Doc (seconds)</span>
+                        <span class="text-[#00d2a0] font-bold">{simTimeSavedSec} seconds</span>
                       </div>
                       <input 
                         type="range" min="5" max="60" value={simTimeSavedSec} 
                         onChange={(e) => setSimTimeSavedSec(Number(e.target.value))}
-                        class="w-full accent-emerald-500 bg-slate-800 rounded-lg cursor-pointer"
+                        class="w-full accent-[#00d2a0] bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer"
                       />
                     </div>
 
                     <div>
                       <div class="flex justify-between text-xs font-semibold mb-2">
-                        <span class="text-slate-300">CareGP Monthly Net Cash Burn ($)</span>
-                        <span class="text-amber-400 font-bold">${simMonthlyBurn.toLocaleString()} / mo</span>
+                        <span class="text-slate-700 dark:text-slate-300">CareGP Monthly Net Cash Burn ($)</span>
+                        <span class="text-amber-500 font-bold">${simMonthlyBurn.toLocaleString()} / mo</span>
                       </div>
                       <input 
                         type="range" min="30000" max="250000" step="5000" value={simMonthlyBurn} 
                         onChange={(e) => setSimMonthlyBurn(Number(e.target.value))}
-                        class="w-full accent-amber-500 bg-slate-800 rounded-lg cursor-pointer"
+                        class="w-full accent-amber-500 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Results */}
-                <div class="lg:col-span-6 bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col justify-between space-y-6">
+                <div class="lg:col-span-6 bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-6 shadow-sm flex flex-col justify-between space-y-6">
                   <div>
-                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
+                    <span class="text-xs font-bold uppercase tracking-wider text-[#00d2a0] bg-[#00d2a0]/15 px-3 py-1 rounded-full border border-[#00d2a0]/30">
                       Modeler Output
                     </span>
-                    <h4 class="text-xl font-bold text-slate-100 mt-3">Projected Annual Financial Outcomes</h4>
+                    <h4 class="text-xl font-bold text-slate-900 dark:text-white mt-3">Projected Annual Financial Outcomes</h4>
                   </div>
 
                   <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-slate-950 p-4 rounded-lg border border-slate-800">
-                      <div class="text-xs text-slate-400">Annual Hours Reclaimed</div>
-                      <div class="text-2xl font-bold text-slate-100 numeric mt-1">
-                        {Number(simResults.annualHours).toLocaleString()} <span class="text-xs font-normal text-slate-400">hrs/yr</span>
+                    <div class="bg-slate-50 dark:bg-[#060c18] p-4 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
+                      <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Annual Hours Reclaimed</div>
+                      <div class="text-2xl font-bold text-slate-900 dark:text-white numeric mt-1">
+                        {Number(simResults.annualHours).toLocaleString()} <span class="text-xs font-normal text-slate-500 dark:text-slate-400">hrs/yr</span>
                       </div>
                     </div>
 
-                    <div class="bg-slate-950 p-4 rounded-lg border border-slate-800">
-                      <div class="text-xs text-slate-400">Gross Value Saved</div>
-                      <div class="text-2xl font-bold text-emerald-400 numeric mt-1">
+                    <div class="bg-slate-50 dark:bg-[#060c18] p-4 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
+                      <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Gross Value Saved</div>
+                      <div class="text-2xl font-bold text-[#00d2a0] numeric mt-1">
                         ${Number(simResults.annualGrossSavings).toLocaleString()}
                       </div>
                     </div>
 
-                    <div class="bg-slate-950 p-4 rounded-lg border border-slate-800">
-                      <div class="text-xs text-slate-400">Estimated Platform Cost</div>
-                      <div class="text-xl font-bold text-slate-300 numeric mt-1">
+                    <div class="bg-slate-50 dark:bg-[#060c18] p-4 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
+                      <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Estimated Platform Cost</div>
+                      <div class="text-xl font-bold text-slate-700 dark:text-slate-300 numeric mt-1">
                         ${Number(simResults.estSubAnnual).toLocaleString()}
                       </div>
                     </div>
 
-                    <div class="bg-slate-950 p-4 rounded-lg border border-emerald-500/30 bg-emerald-500/5">
-                      <div class="text-xs text-emerald-300 font-semibold">Net Annual ROI</div>
-                      <div class="text-2xl font-bold text-emerald-400 numeric mt-1">
+                    <div class="bg-[#00d2a0]/10 p-4 rounded-xl border border-[#00d2a0]/30">
+                      <div class="text-xs text-[#00d2a0] font-bold">Net Annual ROI</div>
+                      <div class="text-2xl font-bold text-[#00d2a0] numeric mt-1">
                         ${Number(simResults.netAnnualSavings).toLocaleString()}
                       </div>
-                      <div class="text-[11px] text-emerald-300 mt-1 font-semibold">
+                      <div class="text-[11px] text-[#00d2a0] mt-1 font-bold">
                         ⚡ {simResults.roiMult}x ROI Multiplier
                       </div>
                     </div>
                   </div>
 
-                  <div class="p-4 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-400">
-                    <p class="font-semibold text-slate-200 mb-1">Company Health Impact:</p>
-                    With ${simMonthlyBurn.toLocaleString()}/mo net burn and ${simCashBalance.toLocaleString()} cash in bank, CareGP maintains <strong class="text-blue-400">{simResults.runway} months of runway</strong>.
+                  <div class="p-4 rounded-xl bg-slate-50 dark:bg-[#060c18] border border-slate-200 dark:border-[#1a2e4f] text-xs text-slate-600 dark:text-slate-400">
+                    <p class="font-bold text-slate-900 dark:text-slate-200 mb-1">Company Health Impact:</p>
+                    With ${simMonthlyBurn.toLocaleString()}/mo net burn and ${simCashBalance.toLocaleString()} cash in bank, CareGP maintains <strong class="text-[#0066ff] dark:text-[#388eff]">{simResults.runway} months of runway</strong>.
                   </div>
                 </div>
 
@@ -1569,86 +1699,86 @@
 
             {/* TAB 7: CLINICS DIRECTORY */}
             {activeTab === 'clinics' && (
-              <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+              <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl overflow-hidden shadow-lg">
                 
-                <div class="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4 bg-slate-900/50">
+                <div class="p-4 border-b border-slate-200 dark:border-[#1a2e4f] flex flex-wrap items-center justify-between gap-4 bg-slate-50 dark:bg-[#0f1c33]">
                   <div class="flex items-center gap-3">
-                    <h3 class="text-sm font-bold text-slate-100">Medical Practices Directory</h3>
-                    <span class="px-2 py-0.5 rounded text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Medical Practices Directory</h3>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
                       Showing {paginatedClinics.length} of {sortedClinics.length} clinics
                     </span>
                   </div>
 
-                  <div class="text-xs text-slate-400">
+                  <div class="text-xs text-slate-500 dark:text-slate-400">
                     Click any practice row to inspect agent adoption, accuracy & ROI.
                   </div>
                 </div>
 
                 <div class="overflow-x-auto">
                   <table class="w-full text-xs text-left border-collapse">
-                    <thead class="bg-slate-950 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider text-[11px]">
+                    <thead class="bg-slate-100 dark:bg-[#060c18] text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-[#1a2e4f] uppercase tracking-wider text-[11px]">
                       <tr>
-                        <th onClick={() => handleSort('name')} class="p-3 cursor-pointer hover:text-slate-200 transition-colors">
+                        <th onClick={() => handleSort('name')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors">
                           Clinic Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th onClick={() => handleSort('status')} class="p-3 cursor-pointer hover:text-slate-200 transition-colors">
+                        <th onClick={() => handleSort('status')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors">
                           Status {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th onClick={() => handleSort('numGps')} class="p-3 cursor-pointer hover:text-slate-200 transition-colors text-right numeric">
+                        <th onClick={() => handleSort('numGps')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors text-right numeric">
                           GPs {sortField === 'numGps' && (sortDirection === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th onClick={() => handleSort('agentCount')} class="p-3 cursor-pointer hover:text-slate-200 transition-colors text-center">
+                        <th onClick={() => handleSort('agentCount')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors text-center">
                           Agents {sortField === 'agentCount' && (sortDirection === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th onClick={() => handleSort('monthlySubscription')} class="p-3 cursor-pointer hover:text-slate-200 transition-colors text-right numeric">
+                        <th onClick={() => handleSort('monthlySubscription')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors text-right numeric">
                           Sub ($/mo) {sortField === 'monthlySubscription' && (sortDirection === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th onClick={() => handleSort('uploaderPct')} class="p-3 cursor-pointer hover:text-slate-200 transition-colors text-right numeric">
+                        <th onClick={() => handleSort('uploaderPct')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors text-right numeric">
                           Uploader % {sortField === 'uploaderPct' && (sortDirection === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th onClick={() => handleSort('avgAccuracy')} class="p-3 cursor-pointer hover:text-slate-200 transition-colors text-right numeric">
+                        <th onClick={() => handleSort('avgAccuracy')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors text-right numeric">
                           Avg Accuracy {sortField === 'avgAccuracy' && (sortDirection === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th onClick={() => handleSort('totalHoursSaved')} class="p-3 cursor-pointer hover:text-slate-200 transition-colors text-right numeric">
+                        <th onClick={() => handleSort('totalHoursSaved')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors text-right numeric">
                           Hours Saved {sortField === 'totalHoursSaved' && (sortDirection === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th onClick={() => handleSort('financialSavings')} class="p-3 cursor-pointer hover:text-slate-200 transition-colors text-right numeric">
+                        <th onClick={() => handleSort('financialSavings')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors text-right numeric">
                           Financial ROI ($) {sortField === 'financialSavings' && (sortDirection === 'asc' ? '↑' : '↓')}
                         </th>
                       </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-800/60">
+                    <tbody class="divide-y divide-slate-200 dark:divide-[#1a2e4f]/60">
                       {paginatedClinics.map((c) => (
                         <tr 
                           key={c.id}
                           onClick={() => setSelectedClinic(c)}
-                          class="hover:bg-slate-800/50 cursor-pointer transition-colors group"
+                          class="hover:bg-slate-50 dark:hover:bg-[#172745]/60 cursor-pointer transition-colors group"
                         >
-                          <td class="p-3 font-medium text-slate-200 group-hover:text-emerald-400 transition-colors max-w-xs truncate">
+                          <td class="p-3.5 font-bold text-slate-800 dark:text-slate-200 group-hover:text-[#0066ff] dark:group-hover:text-[#388eff] transition-colors max-w-xs truncate">
                             {c.name}
                           </td>
-                          <td class="p-3">{getStatusBadge(c.status)}</td>
-                          <td class="p-3 text-right numeric text-slate-300">{c.numGps || '-'}</td>
-                          <td class="p-3 text-center">
-                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                          <td class="p-3.5">{getStatusBadge(c.status)}</td>
+                          <td class="p-3.5 text-right numeric text-slate-700 dark:text-slate-300">{c.numGps || '-'}</td>
+                          <td class="p-3.5 text-center">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
                               {c.agentCount} Agents
                             </span>
                           </td>
-                          <td class="p-3 text-right numeric text-slate-300">${c.monthlySubscription.toLocaleString()}</td>
-                          <td class="p-3 text-right numeric font-medium text-slate-200">
+                          <td class="p-3.5 text-right numeric text-slate-700 dark:text-slate-300">${c.monthlySubscription.toLocaleString()}</td>
+                          <td class="p-3.5 text-right numeric font-semibold text-slate-800 dark:text-slate-200">
                             {c.uploaderPct > 0 ? `${c.uploaderPct.toFixed(1)}%` : '-'}
                           </td>
-                          <td class="p-3 text-right numeric text-slate-300">
+                          <td class="p-3.5 text-right numeric text-slate-700 dark:text-slate-300">
                             {c.avgAccuracy > 0 ? (
-                              <span class={c.avgAccuracy >= 85 ? 'text-emerald-400 font-semibold' : 'text-amber-400'}>
+                              <span class={c.avgAccuracy >= 85 ? 'text-[#00d2a0] font-bold' : 'text-amber-500 font-semibold'}>
                                 {c.avgAccuracy.toFixed(1)}%
                               </span>
                             ) : '-'}
                           </td>
-                          <td class="p-3 text-right numeric text-slate-300">
+                          <td class="p-3.5 text-right numeric text-slate-700 dark:text-slate-300">
                             {c.totalHoursSaved > 0 ? `${Math.round(c.totalHoursSaved).toLocaleString()} h` : '-'}
                           </td>
-                          <td class="p-3 text-right numeric font-bold text-emerald-400">
+                          <td class="p-3.5 text-right numeric font-bold text-[#00d2a0]">
                             {c.financialSavings > 0 ? `$${Math.round(c.financialSavings).toLocaleString()}` : '-'}
                           </td>
                         </tr>
@@ -1665,20 +1795,20 @@
                   </table>
                 </div>
 
-                <div class="p-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 bg-slate-950">
+                <div class="p-3 border-t border-slate-200 dark:border-[#1a2e4f] flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-[#060c18]">
                   <span>Page {page} of {totalPages}</span>
                   <div class="flex items-center gap-1">
                     <button 
                       onClick={() => setPage(p => Math.max(1, p - 1))}
                       disabled={page === 1}
-                      class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-300 border border-slate-700"
+                      class="px-3 py-1 rounded-lg bg-white dark:bg-[#0f1c33] hover:bg-slate-100 dark:hover:bg-[#1a2e4f] disabled:opacity-40 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#1a2e4f] font-medium"
                     >
                       Previous
                     </button>
                     <button 
                       onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                       disabled={page === totalPages}
-                      class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-300 border border-slate-700"
+                      class="px-3 py-1 rounded-lg bg-white dark:bg-[#0f1c33] hover:bg-slate-100 dark:hover:bg-[#1a2e4f] disabled:opacity-40 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#1a2e4f] font-medium"
                     >
                       Next
                     </button>
@@ -1692,103 +1822,103 @@
 
           {/* CLINIC DETAIL MODAL */}
           {selectedClinic && (
-            <div class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-              <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-6">
+            <div class="fixed inset-0 z-50 bg-slate-900/60 dark:bg-[#060c18]/80 backdrop-blur-sm flex items-center justify-center p-4">
+              <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-6">
                 
-                <div class="flex items-start justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-start justify-between border-b border-slate-200 dark:border-[#1a2e4f] pb-4">
                   <div>
                     <div class="flex items-center gap-2">
-                      <h3 class="text-lg font-bold text-slate-100">{selectedClinic.name}</h3>
+                      <h3 class="text-lg font-bold text-slate-900 dark:text-white">{selectedClinic.name}</h3>
                       {getStatusBadge(selectedClinic.status)}
                     </div>
                     {selectedClinic.comments && (
-                      <p class="text-xs text-amber-400 mt-1 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20 inline-block">
+                      <p class="text-xs text-amber-600 dark:text-amber-400 mt-1.5 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 inline-block font-medium">
                         Note: {selectedClinic.comments}
                       </p>
                     )}
                   </div>
 
-                  <button onClick={() => setSelectedClinic(null)} class="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200">
+                  <button onClick={() => setSelectedClinic(null)} class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#1a2e4f] text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
                     <X size={18} />
                   </button>
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                    <span class="text-slate-400">Total Financial Savings</span>
-                    <div class="text-lg font-bold text-emerald-400 numeric mt-1">
+                  <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Total Financial Savings</span>
+                    <div class="text-lg font-bold text-[#00d2a0] numeric mt-1">
                       ${Math.round(selectedClinic.financialSavings).toLocaleString()}
                     </div>
                   </div>
 
-                  <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                    <span class="text-slate-400">Hours Reclaimed</span>
-                    <div class="text-lg font-bold text-slate-100 numeric mt-1">
+                  <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Hours Reclaimed</span>
+                    <div class="text-lg font-bold text-slate-900 dark:text-white numeric mt-1">
                       {Math.round(selectedClinic.totalHoursSaved)} hrs
                     </div>
                   </div>
 
-                  <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                    <span class="text-slate-400">Active Agents</span>
-                    <div class="text-lg font-bold text-purple-400 numeric mt-1">
+                  <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Active Agents</span>
+                    <div class="text-lg font-bold text-purple-600 dark:text-purple-400 numeric mt-1">
                       {selectedClinic.agentCount} / 3 Agents
                     </div>
                   </div>
 
-                  <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                    <span class="text-slate-400">Monthly Subscription</span>
-                    <div class="text-lg font-bold text-teal-400 numeric mt-1">
+                  <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Monthly Subscription</span>
+                    <div class="text-lg font-bold text-[#0066ff] dark:text-[#388eff] numeric mt-1">
                       ${selectedClinic.monthlySubscription}/mo
                     </div>
                   </div>
                 </div>
 
-                <div class="space-y-3 bg-slate-950 p-4 rounded-xl border border-slate-800">
-                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">Accuracy & Verification Levels</h4>
+                <div class="space-y-3 bg-slate-50 dark:bg-[#060c18] p-4 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Accuracy & Verification Layers</h4>
                   
                   <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-                    <div class="bg-slate-900 p-2 rounded border border-slate-800">
-                      <div class="text-slate-400 text-[10px]">Layer 1 (OCR)</div>
-                      <div class="font-bold text-slate-200 mt-0.5">{selectedClinic.accuracyL1.toFixed(1)}%</div>
+                    <div class="bg-white dark:bg-[#0f1c33] p-2.5 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                      <div class="text-slate-500 dark:text-slate-400 text-[10px] font-medium">Layer 1 (OCR)</div>
+                      <div class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{selectedClinic.accuracyL1.toFixed(1)}%</div>
                     </div>
-                    <div class="bg-slate-900 p-2 rounded border border-slate-800">
-                      <div class="text-slate-400 text-[10px]">Layer 2 (Entities)</div>
-                      <div class="font-bold text-slate-200 mt-0.5">{selectedClinic.accuracyL2.toFixed(1)}%</div>
+                    <div class="bg-white dark:bg-[#0f1c33] p-2.5 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                      <div class="text-slate-500 dark:text-slate-400 text-[10px] font-medium">Layer 2 (Entities)</div>
+                      <div class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{selectedClinic.accuracyL2.toFixed(1)}%</div>
                     </div>
-                    <div class="bg-slate-900 p-2 rounded border border-slate-800">
-                      <div class="text-slate-400 text-[10px]">Layer 3 (Coding)</div>
-                      <div class="font-bold text-slate-200 mt-0.5">{selectedClinic.accuracyL3.toFixed(1)}%</div>
+                    <div class="bg-white dark:bg-[#0f1c33] p-2.5 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                      <div class="text-slate-500 dark:text-slate-400 text-[10px] font-medium">Layer 3 (Coding)</div>
+                      <div class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{selectedClinic.accuracyL3.toFixed(1)}%</div>
                     </div>
-                    <div class="bg-slate-900 p-2 rounded border border-slate-800">
-                      <div class="text-slate-400 text-[10px]">Layer 4 (Safety)</div>
-                      <div class="font-bold text-slate-200 mt-0.5">{selectedClinic.accuracyL4.toFixed(1)}%</div>
+                    <div class="bg-white dark:bg-[#0f1c33] p-2.5 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                      <div class="text-slate-500 dark:text-slate-400 text-[10px] font-medium">Layer 4 (Safety)</div>
+                      <div class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{selectedClinic.accuracyL4.toFixed(1)}%</div>
                     </div>
                   </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 text-xs text-slate-300 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                <div class="grid grid-cols-2 gap-3 text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-[#060c18] p-4 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
                   <div>
-                    <span class="text-slate-500">Document Allocations:</span> <strong class="text-slate-200">{selectedClinic.allocations.toLocaleString()}</strong>
+                    <span class="text-slate-500">Document Allocations:</span> <strong class="text-slate-900 dark:text-slate-200">{selectedClinic.allocations.toLocaleString()}</strong>
                   </div>
                   <div>
-                    <span class="text-slate-500">Document Uploads:</span> <strong class="text-slate-200">{selectedClinic.uploads.toLocaleString()}</strong>
+                    <span class="text-slate-500">Document Uploads:</span> <strong class="text-slate-900 dark:text-slate-200">{selectedClinic.uploads.toLocaleString()}</strong>
                   </div>
                   <div>
-                    <span class="text-slate-500">Pilot Launch Date:</span> <strong class="text-slate-200">{selectedClinic.pilotStartDate || 'N/A'}</strong>
+                    <span class="text-slate-500">Pilot Launch Date:</span> <strong class="text-slate-900 dark:text-slate-200">{selectedClinic.pilotStartDate || 'N/A'}</strong>
                   </div>
                   <div>
-                    <span class="text-slate-500">Days Elapsed:</span> <strong class="text-slate-200">{selectedClinic.daysElapsed} days</strong>
+                    <span class="text-slate-500">Days Elapsed:</span> <strong class="text-slate-900 dark:text-slate-200">{selectedClinic.daysElapsed} days</strong>
                   </div>
                   <div>
-                    <span class="text-slate-500">Time Saved / Doc:</span> <strong class="text-emerald-400">{selectedClinic.timePerDocSec.toFixed(1)} seconds</strong>
+                    <span class="text-slate-500">Time Saved / Doc:</span> <strong class="text-[#00d2a0] font-bold">{selectedClinic.timePerDocSec.toFixed(1)} seconds</strong>
                   </div>
                   <div>
-                    <span class="text-slate-500">NPS Score:</span> <strong class="text-emerald-400">+{selectedClinic.nps}</strong>
+                    <span class="text-slate-500">NPS Score:</span> <strong class="text-[#00d2a0] font-bold">+{selectedClinic.nps}</strong>
                   </div>
                 </div>
 
                 <div class="flex justify-end pt-2">
-                  <button onClick={() => setSelectedClinic(null)} class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700">
+                  <button onClick={() => setSelectedClinic(null)} class="px-4 py-2 bg-slate-100 dark:bg-[#1a2e4f] hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
                     Close Details
                   </button>
                 </div>
@@ -1797,9 +1927,17 @@
             </div>
           )}
 
-          {/* FOOTER */}
-          <footer class="border-t border-slate-800 py-4 px-4 text-center text-xs text-slate-500">
-            CareGP Financial & Operational Intelligence Dashboard • Connected to Google Sheets ({summary.totalClinics} Medical Practices)
+          {/* FOOTER MATCHING CAREGP BRANDING */}
+          <footer class="border-t border-slate-200 dark:border-[#1a2e4f] py-4 px-4 text-center text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-[#000c1c]">
+            <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2 font-medium">
+                <span class="text-slate-900 dark:text-white font-bold">Care<span class="text-[#00a3ff]">GP</span></span>
+                <span>• Financial & Operational Intelligence Dashboard</span>
+              </div>
+              <div>
+                Connected to CareGP Google Sheet ({summary.totalClinics} General Practices)
+              </div>
+            </div>
           </footer>
         </div>
       );
