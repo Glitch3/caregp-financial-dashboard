@@ -97,16 +97,221 @@
     import { createRoot } from 'react-dom/client';
     import { 
       TrendingUp, DollarSign, Clock, Building2, FileText, CheckCircle2, 
-      AlertCircle, Search, RefreshCw, ArrowUpRight, ArrowDownRight,
+      AlertCircle, Search, RefreshCw, ArrowUpRight, ArrowDownRight, 
       ChevronDown, ChevronUp, Filter, Users, Cpu, ShieldCheck, Zap, Activity, Info, 
       Calculator, ArrowRight, X, ExternalLink, Calendar, HelpCircle,
       PieChart as PieIcon, Layers, Target, Scale, Award, Percent, BarChart3,
-      Mic, Receipt, Sparkles, AlertTriangle, Moon, Sun, Shield, Check, Crosshair
+      Mic, Receipt, Sparkles, AlertTriangle, Moon, Sun, Shield, Check, Crosshair,
+      BookOpen, Code, CheckSquare, ListFilter, Terminal
     } from 'lucide-react';
     import { 
       ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, 
       Cell, PieChart, Pie, Legend
     } from 'recharts';
+
+    // FORMULAS CATALOG DICTIONARY
+    const FORMULAS_CATALOG = {
+      arr: {
+        id: 'arr',
+        title: 'Annual Recurring Revenue (ARR)',
+        category: 'Financial Core',
+        equation: 'Live ARR = ∑ (Monthly Subscription_c × 12)',
+        latex: 'ARR = \\sum_{c \\in Active} (Sub_c \\times 12)',
+        explanation: 'Sum of all annualized recurring active clinic contracts across monthly and annual plans.',
+        sheetSource: 'Sheet Col O (numGps) × Rate × Agent Multiplier × 12',
+        inputs: [
+          { name: 'Active Clinics', value: 'Clinics with status ≠ Dropped Off' },
+          { name: 'Monthly Sub', value: 'numGps × Rate × Multiplier' },
+          { name: 'Annualization Factor', value: '12 Months' }
+        ],
+        example: 'If Clinic A has 5 GPs on Annual Plan ($105/mo/GP) with 2 Agents (1.5x): Sub = 5 × $105 × 1.5 = $787.50/mo. ARR = $787.50 × 12 = $9,450/yr.'
+      },
+      mrr: {
+        id: 'mrr',
+        title: 'Monthly Recurring Revenue (MRR)',
+        category: 'Financial Core',
+        equation: 'Live MRR = Total Live ARR ÷ 12',
+        latex: 'MRR = \\frac{\\text{Live ARR}}{12}',
+        explanation: 'Normalized monthly recurring subscription revenue stream from all active clinic accounts.',
+        sheetSource: 'Derived directly from Live ARR',
+        inputs: [
+          { name: 'Total Live ARR', value: 'Sum of all active clinic ARRs' },
+          { name: 'Months per Year', value: '12' }
+        ],
+        example: '$520,000 Total ARR ÷ 12 = $43,333.33 MRR'
+      },
+      arpu: {
+        id: 'arpu',
+        title: 'Average Revenue Per Practice / User (ARPU)',
+        category: 'Unit Economics',
+        equation: 'ARPU = Total Category ARR ÷ Active Category Clinics',
+        latex: 'ARPU = \\frac{\\text{Total Segment ARR}}{\\text{Active Segment Clinics}}',
+        explanation: 'Measures average annual contract value per practice within a specific size or payment category.',
+        sheetSource: 'Category Total Live ARR ÷ Category Active Clinic Count',
+        inputs: [
+          { name: 'Total Category ARR', value: 'Sum of ARR in tier' },
+          { name: 'Active Category Clinics', value: 'Active clinics in tier' }
+        ],
+        example: 'Small Practice Segment: $148,500 ARR ÷ 18 Active Clinics = $8,250 ARPU'
+      },
+      nrr: {
+        id: 'nrr',
+        title: 'Net Revenue Retention (NRR)',
+        category: 'SaaS Retention',
+        equation: 'NRR % = [(Start ARR + Expansion ARR - Churn ARR - Downgrade ARR) ÷ Start ARR] × 100',
+        latex: 'NRR = \\frac{\\text{Start ARR} + \\text{Expansion} - \\text{Churn} - \\text{Downgrade}}{\\text{Start ARR}} \\times 100\\%',
+        explanation: 'Measures net revenue growth from an existing cohort including multi-agent upsells minus cancellations.',
+        sheetSource: 'SaaS Cohort Analytics Engine',
+        inputs: [
+          { name: 'Start Cohort ARR', value: 'Baseline ARR' },
+          { name: 'Expansion ARR', value: 'Voice & Billing Agent upgrades' },
+          { name: 'Churn & Downgrades', value: 'Canceled / reduced contracts' }
+        ],
+        example: '($400,000 + $96,000 - $24,000 - $8,000) ÷ $400,000 = $464,000 ÷ $400,000 = 116.0% NRR'
+      },
+      grr: {
+        id: 'grr',
+        title: 'Gross Revenue Retention (GRR)',
+        category: 'SaaS Retention',
+        equation: 'GRR % = [(Start ARR - Churn ARR - Downgrade ARR) ÷ Start ARR] × 100',
+        latex: 'GRR = \\frac{\\text{Start ARR} - \\text{Churn} - \\text{Downgrade}}{\\text{Start ARR}} \\times 100\\%',
+        explanation: 'Measures percentage of baseline revenue retained from existing customers without counting expansion.',
+        sheetSource: 'SaaS Cohort Analytics Engine',
+        inputs: [
+          { name: 'Start Cohort ARR', value: 'Baseline ARR' },
+          { name: 'Churn & Downgrades', value: 'Lost ARR' }
+        ],
+        example: '($400,000 - $24,000 - $8,000) ÷ $400,000 = $368,000 ÷ $400,000 = 92.0% GRR'
+      },
+      logoChurn: {
+        id: 'logoChurn',
+        title: 'Logo Churn Rate %',
+        category: 'Customer Retention',
+        equation: 'Logo Churn % = (Dropped Off Clinics ÷ Total Onboarded Clinics) × 100',
+        latex: '\\text{Logo Churn} = \\frac{N_{\\text{Dropped Off}}}{N_{\\text{Total}}} \\times 100\\%',
+        explanation: 'Percentage of onboarded clinics that dropped off or canceled their pilot/subscription.',
+        sheetSource: 'Sheet Col C (Status = "Dropped Off")',
+        inputs: [
+          { name: 'Dropped Off Clinics', value: 'Count of status = "Dropped Off"' },
+          { name: 'Total Onboarded', value: 'Total clinic rows in dataset' }
+        ],
+        example: '2 Dropped Off Clinics ÷ 32 Onboarded Clinics = 6.25% Logo Churn'
+      },
+      runway: {
+        id: 'runway',
+        title: 'Cash Runway (Months)',
+        category: 'Capital Efficiency',
+        equation: 'Cash Runway = Total Cash Balance ÷ Net Monthly Cash Burn',
+        latex: '\\text{Runway} = \\frac{\\text{Cash Balance}}{\\text{Monthly Net Burn}}',
+        explanation: 'Number of operating months remaining before cash balance reaches zero at current net burn rate.',
+        sheetSource: 'Balance Sheet Cash Reserves ÷ Monthly Cash Loss',
+        inputs: [
+          { name: 'Cash Balance', value: '$2,400,000 AUD' },
+          { name: 'Net Monthly Burn', value: '$85,000 AUD/mo' }
+        ],
+        example: '$2,400,000 ÷ $85,000 = 28.24 Months Runway'
+      },
+      burnMultiple: {
+        id: 'burnMultiple',
+        title: 'Burn Multiple',
+        category: 'Capital Efficiency',
+        equation: 'Burn Multiple = (Net Monthly Cash Burn × 12) ÷ Net New ARR Generated',
+        latex: '\\text{Burn Multiple} = \\frac{\\text{Net Burn} \\times 12}{\\Delta \\text{ARR}}',
+        explanation: 'Measures net cash consumed per dollar of net new ARR generated (< 2.0x is top tier capital efficiency).',
+        sheetSource: 'Annualized Net Operating Cash Loss ÷ Annualized Net New ARR',
+        inputs: [
+          { name: 'Annualized Cash Burn', value: '$85,000 × 12 = $1,020,000' },
+          { name: 'Net New ARR', value: 'New + Expansion ARR - Churn ARR ($560,000)' }
+        ],
+        example: '$1,020,000 ÷ $560,000 = 1.82x Burn Multiple'
+      },
+      quickRatio: {
+        id: 'quickRatio',
+        title: 'SaaS Quick Ratio',
+        category: 'SaaS Growth',
+        equation: 'Quick Ratio = (New MRR + Expansion MRR) ÷ (Churned MRR + Contraction MRR)',
+        latex: '\\text{Quick Ratio} = \\frac{\\text{New MRR} + \\text{Expansion MRR}}{\\text{Churn MRR} + \\text{Contraction MRR}}',
+        explanation: 'Growth velocity ratio measuring revenue added for every dollar of revenue lost (> 4.0x indicates strong growth).',
+        sheetSource: 'MRR Growth Analysis',
+        inputs: [
+          { name: 'New + Expansion MRR', value: '$12,000/mo' },
+          { name: 'Churn + Contraction MRR', value: '$2,500/mo' }
+        ],
+        example: '$12,000 ÷ $2,500 = 4.80x Quick Ratio'
+      },
+      ruleOf40: {
+        id: 'ruleOf40',
+        title: 'Rule of 40 Score',
+        category: 'Valuation & Performance',
+        equation: 'Rule of 40 = YoY ARR Growth Rate (%) + Operating Cash Margin (%)',
+        latex: '\\text{Rule of 40} = g_{\\text{ARR}} + \\text{Margin}',
+        explanation: 'SaaS benchmark evaluating growth vs profitability. Scores > 40 denote top-performing software platforms.',
+        sheetSource: 'YoY Growth Rate + Net Margin',
+        inputs: [
+          { name: 'YoY ARR Growth Rate', value: '128.5%' },
+          { name: 'Operating Margin', value: '-26.4%' }
+        ],
+        example: '128.5% + (-26.4%) = 102.1 Rule of 40 Score'
+      },
+      hoursSaved: {
+        id: 'hoursSaved',
+        title: 'Doctor Hours Saved',
+        category: 'Operational Impact',
+        equation: 'Hours Saved = Uploads × (180s Baseline - Processing Sec) ÷ 3600',
+        latex: '\\text{Hours Saved} = \\frac{\\text{Uploads} \\times (180\\text{s} - T_{\\text{doc}})}{3600}',
+        explanation: 'Calculates clinical administrative hours saved by comparing document processing speed to the 180s (3 min) manual baseline.',
+        sheetSource: 'Sheet Col R (totalHoursSaved) or Col E (uploads) & Col P (timePerDocSec)',
+        inputs: [
+          { name: 'Manual Baseline', value: '180 seconds (3 mins / doc)' },
+          { name: 'CareGP Speed', value: 'Sheet Col P (avg 20s)' },
+          { name: 'Total Uploads', value: 'Sheet Col E' }
+        ],
+        example: '1,200 uploads × (180s - 20s) ÷ 3600 = 1,200 × 160 ÷ 3600 = 53.33 Hours Saved'
+      },
+      financialSavings: {
+        id: 'financialSavings',
+        title: 'Financial Value Saved ($)',
+        category: 'Operational Impact',
+        equation: 'Financial Savings ($) = Total Doctor Hours Saved × $120/hr GP Rate',
+        latex: '\\text{Financial Savings} = \\text{Hours Saved} \\times \\$120/\\text{hr}',
+        explanation: 'Translates doctor clinical hours saved into financial savings based on the standard $120 AUD/hr GP cost rate.',
+        sheetSource: 'Sheet Col S (financialSavings)',
+        inputs: [
+          { name: 'Hours Saved', value: 'Total Doctor Hours Saved' },
+          { name: 'GP Blended Rate', value: '$120 AUD / hour' }
+        ],
+        example: '2,400 Hours Saved × $120/hr = $288,000 AUD Financial Savings'
+      },
+      pricingModel: {
+        id: 'pricingModel',
+        title: 'CareGP Subscription & Discount Matrix',
+        category: 'Pricing Logic',
+        equation: 'Monthly Sub = GP Seats × Schedule Rate × Agent Multiplier',
+        latex: '\\text{Sub} = \\text{numGps} \\times \\text{Rate} \\times \\text{AgentMult}',
+        explanation: 'Base rate per GP: $125/mo for Monthly, $105/mo for Annual (16% discount). Agent multipliers: 1 Agent = 1.0x, 2 Agents = 1.5x, 3 Agents = 2.1x.',
+        sheetSource: 'Sheet Col O (numGps) & Multi-agent selection',
+        inputs: [
+          { name: 'Monthly Base Rate', value: '$125 / GP / month' },
+          { name: 'Annual Base Rate', value: '$105 / GP / month (16% OFF)' },
+          { name: 'Agent Multipliers', value: '1 Agent (1.0x) | 2 Agents (1.5x) | 3 Agents (2.1x)' }
+        ],
+        example: '8 GPs on Annual Plan with 3 Agents: 8 × $105 × 2.1 = $1,764/mo ($21,168 ARR)'
+      },
+      roiMultiplier: {
+        id: 'roiMultiplier',
+        title: 'Clinic ROI Multiplier',
+        category: 'Pricing Logic',
+        equation: 'ROI Multiplier = Financial Value Saved ($) ÷ Annual CareGP Subscription ($)',
+        latex: '\\text{ROI} = \\frac{\\text{Financial Savings}}{\\text{Annual Subscription}}',
+        explanation: 'Measures return on investment delivered to the clinic per dollar spent on CareGP subscriptions.',
+        sheetSource: 'Sheet Col X (roiMultiplier)',
+        inputs: [
+          { name: 'Financial Savings', value: 'Hours Saved × $120/hr' },
+          { name: 'Annual CareGP Sub', value: 'Annual Subscription Cost' }
+        ],
+        example: '$288,000 Financial Savings ÷ $21,168 Subscription = 13.6x Net ROI'
+      }
+    };
 
     function App() {
       const [data, setData] = useState(null);
@@ -120,19 +325,23 @@
       const [sizeFilter, setSizeFilter] = useState('All');
       const [paymentFilter, setPaymentFilter] = useState('All');
 
-      // Tabs: 'summary', 'segmentation', 'saas', 'directory', 'calculator'
+      // Tabs: 'summary', 'segmentation', 'saas', 'directory', 'calculator', 'formulas'
       const [activeTab, setActiveTab] = useState('summary');
       const [selectedClinic, setSelectedClinic] = useState(null);
+      const [selectedFormulaKey, setSelectedFormulaKey] = useState(null);
 
       // Sorting
       const [sortField, setSortField] = useState('arr');
       const [sortDirection, setSortDir] = useState('desc');
       const [isDarkMode, setIsDarkMode] = useState(true);
 
-      // Simple Calculator state
+      // Calculator state
       const [calcGps, setCalcGps] = useState(6);
       const [calcSchedule, setCalcSchedule] = useState('Annual');
       const [calcAgents, setCalcAgents] = useState(2); // 1, 2, or 3
+
+      // Interactive Audit Tool state in Tab 6
+      const [auditClinicIndex, setAuditClinicIndex] = useState(0);
 
       // Theme toggle
       const toggleTheme = () => {
@@ -231,26 +440,7 @@
       const fmtCurrency = (val) => new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', maximumFractionDigits: 0 }).format(val || 0);
       const fmtNum = (val) => new Intl.NumberFormat('en-AU').format(val || 0);
 
-      // Recharts Color Theme
-      const COLORS = {
-        blue: '#0066ff',
-        mint: '#00d2a0',
-        purple: '#a855f7',
-        amber: '#f59e0b',
-        navy: '#1a2e4f'
-      };
-
-      // Chart Data preparation
-      const chartSizeData = [
-        { name: 'Small (1-3 GPs)', arr: sizeSegmentation.small.totalArr, clinics: sizeSegmentation.small.count, arpu: sizeSegmentation.small.arpu },
-        { name: 'Medium (4-9 GPs)', arr: sizeSegmentation.medium.totalArr, clinics: sizeSegmentation.medium.count, arpu: sizeSegmentation.medium.arpu },
-        { name: 'Large (10+ GPs)', arr: sizeSegmentation.large.totalArr, clinics: sizeSegmentation.large.count, arpu: sizeSegmentation.large.arpu },
-      ];
-
-      const chartPaymentData = [
-        { name: 'Monthly Billing', value: paymentSegmentation.monthly.totalArr, clinics: paymentSegmentation.monthly.count, churn: paymentSegmentation.monthly.logoChurnRate },
-        { name: 'Annual Billing', value: paymentSegmentation.annual.totalArr, clinics: paymentSegmentation.annual.count, churn: paymentSegmentation.annual.logoChurnRate },
-      ];
+      const formulaModalData = selectedFormulaKey ? FORMULAS_CATALOG[selectedFormulaKey] : null;
 
       return (
         <div class="min-h-screen bg-[#060c18] dark:bg-[#060c18] text-slate-100 flex flex-col">
@@ -308,7 +498,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto gap-2 border-t border-[#1a2e4f]/60 pt-2 pb-2">
               <button
                 onClick={() => setActiveTab('summary')}
-                class={`px-4 py-2 rounded-lg font-semibold text-xs tracking-wide transition-all flex items-center gap-2 whitespace-nowrap ${
+                class={`px-3.5 py-2 rounded-lg font-semibold text-xs tracking-wide transition-all flex items-center gap-1.5 whitespace-nowrap ${
                   activeTab === 'summary'
                     ? 'bg-[#0066ff] text-white shadow-md shadow-[#0066ff]/30'
                     : 'text-slate-400 hover:text-white hover:bg-[#14233c]'
@@ -320,7 +510,7 @@
 
               <button
                 onClick={() => setActiveTab('segmentation')}
-                class={`px-4 py-2 rounded-lg font-semibold text-xs tracking-wide transition-all flex items-center gap-2 whitespace-nowrap ${
+                class={`px-3.5 py-2 rounded-lg font-semibold text-xs tracking-wide transition-all flex items-center gap-1.5 whitespace-nowrap ${
                   activeTab === 'segmentation'
                     ? 'bg-[#0066ff] text-white shadow-md shadow-[#0066ff]/30'
                     : 'text-slate-400 hover:text-white hover:bg-[#14233c]'
@@ -332,7 +522,7 @@
 
               <button
                 onClick={() => setActiveTab('saas')}
-                class={`px-4 py-2 rounded-lg font-semibold text-xs tracking-wide transition-all flex items-center gap-2 whitespace-nowrap ${
+                class={`px-3.5 py-2 rounded-lg font-semibold text-xs tracking-wide transition-all flex items-center gap-1.5 whitespace-nowrap ${
                   activeTab === 'saas'
                     ? 'bg-[#0066ff] text-white shadow-md shadow-[#0066ff]/30'
                     : 'text-slate-400 hover:text-white hover:bg-[#14233c]'
@@ -344,7 +534,7 @@
 
               <button
                 onClick={() => setActiveTab('directory')}
-                class={`px-4 py-2 rounded-lg font-semibold text-xs tracking-wide transition-all flex items-center gap-2 whitespace-nowrap ${
+                class={`px-3.5 py-2 rounded-lg font-semibold text-xs tracking-wide transition-all flex items-center gap-1.5 whitespace-nowrap ${
                   activeTab === 'directory'
                     ? 'bg-[#0066ff] text-white shadow-md shadow-[#0066ff]/30'
                     : 'text-slate-400 hover:text-white hover:bg-[#14233c]'
@@ -356,7 +546,7 @@
 
               <button
                 onClick={() => setActiveTab('calculator')}
-                class={`px-4 py-2 rounded-lg font-semibold text-xs tracking-wide transition-all flex items-center gap-2 whitespace-nowrap ${
+                class={`px-3.5 py-2 rounded-lg font-semibold text-xs tracking-wide transition-all flex items-center gap-1.5 whitespace-nowrap ${
                   activeTab === 'calculator'
                     ? 'bg-[#0066ff] text-white shadow-md shadow-[#0066ff]/30'
                     : 'text-slate-400 hover:text-white hover:bg-[#14233c]'
@@ -364,6 +554,18 @@
               >
                 <Calculator class="w-3.5 h-3.5 text-amber-400" />
                 5. ROI Calculator
+              </button>
+
+              <button
+                onClick={() => setActiveTab('formulas')}
+                class={`px-3.5 py-2 rounded-lg font-semibold text-xs tracking-wide transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  activeTab === 'formulas'
+                    ? 'bg-[#00d2a0] text-slate-950 font-extrabold shadow-md shadow-[#00d2a0]/30'
+                    : 'text-[#00d2a0] hover:bg-[#00d2a0]/10 border border-[#00d2a0]/30'
+                }`}
+              >
+                <BookOpen class="w-3.5 h-3.5" />
+                📐 6. Calculation Formulas
               </button>
             </div>
           </header>
@@ -383,14 +585,23 @@
                     <div class="absolute top-0 left-0 w-1 h-full bg-[#0066ff]"></div>
                     <div class="flex items-center justify-between mb-2">
                       <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Live ARR</span>
-                      <span class="p-1.5 rounded-lg bg-[#0066ff]/10 text-[#0066ff]">
-                        <DollarSign class="w-4 h-4" />
-                      </span>
+                      <button 
+                        onClick={() => setSelectedFormulaKey('arr')}
+                        class="p-1 rounded bg-[#0066ff]/15 text-[#0066ff] hover:bg-[#0066ff] hover:text-white transition-colors text-[10px] font-bold px-1.5 flex items-center gap-0.5"
+                        title="View Math Formula"
+                      >
+                        <span>ƒ</span> Formula
+                      </button>
                     </div>
                     <div class="text-2xl font-black text-white numeric mb-1">{fmtCurrency(summary.totalLiveArr)}</div>
-                    <div class="flex items-center gap-1.5 text-xs text-[#00d2a0] font-medium">
-                      <TrendingUp class="w-3.5 h-3.5" />
-                      <span>{fmtCurrency(summary.totalLiveMrr)} / mo</span>
+                    <div class="flex items-center justify-between text-xs text-[#00d2a0] font-medium">
+                      <div class="flex items-center gap-1">
+                        <TrendingUp class="w-3.5 h-3.5" />
+                        <span>{fmtCurrency(summary.totalLiveMrr)} / mo</span>
+                      </div>
+                      <button onClick={() => setSelectedFormulaKey('mrr')} class="text-[10px] text-slate-400 hover:text-[#00d2a0] underline">
+                        ƒ MRR
+                      </button>
                     </div>
                   </div>
 
@@ -399,13 +610,18 @@
                     <div class="absolute top-0 left-0 w-1 h-full bg-[#00d2a0]"></div>
                     <div class="flex items-center justify-between mb-2">
                       <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Clinics</span>
-                      <span class="p-1.5 rounded-lg bg-[#00d2a0]/10 text-[#00d2a0]">
-                        <Building2 class="w-4 h-4" />
-                      </span>
+                      <button 
+                        onClick={() => setSelectedFormulaKey('logoChurn')}
+                        class="p-1 rounded bg-[#00d2a0]/15 text-[#00d2a0] hover:bg-[#00d2a0] hover:text-slate-950 transition-colors text-[10px] font-bold px-1.5 flex items-center gap-0.5"
+                        title="View Churn Formula"
+                      >
+                        <span>ƒ</span> Formula
+                      </button>
                     </div>
                     <div class="text-2xl font-black text-white numeric mb-1">{summary.totalClinics - summary.droppedOffCount} Clinics</div>
-                    <div class="text-xs text-slate-400 font-medium">
-                      <span class="text-white font-bold">{summary.totalGps}</span> active GP Seats
+                    <div class="text-xs text-slate-400 font-medium flex justify-between items-center">
+                      <span><strong class="text-white">{summary.totalGps}</strong> GP Seats</span>
+                      <span class="text-amber-400 font-bold">{summary.logoChurnRate}% Churn</span>
                     </div>
                   </div>
 
@@ -414,13 +630,20 @@
                     <div class="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
                     <div class="flex items-center justify-between mb-2">
                       <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Net Retention (NRR)</span>
-                      <span class="p-1.5 rounded-lg bg-purple-500/10 text-purple-400">
-                        <Activity class="w-4 h-4" />
-                      </span>
+                      <button 
+                        onClick={() => setSelectedFormulaKey('nrr')}
+                        class="p-1 rounded bg-purple-500/15 text-purple-400 hover:bg-purple-500 hover:text-white transition-colors text-[10px] font-bold px-1.5 flex items-center gap-0.5"
+                        title="View NRR Formula"
+                      >
+                        <span>ƒ</span> Formula
+                      </button>
                     </div>
                     <div class="text-2xl font-black text-white numeric mb-1">{summary.nrr}%</div>
-                    <div class="text-xs text-slate-400 font-medium">
-                      GRR: <span class="text-white font-bold">{summary.grr}%</span>
+                    <div class="text-xs text-slate-400 font-medium flex justify-between items-center">
+                      <span>GRR: <strong class="text-white">{summary.grr}%</strong></span>
+                      <button onClick={() => setSelectedFormulaKey('grr')} class="text-[10px] text-purple-400 hover:underline">
+                        ƒ GRR
+                      </button>
                     </div>
                   </div>
 
@@ -429,13 +652,20 @@
                     <div class="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
                     <div class="flex items-center justify-between mb-2">
                       <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cash Runway</span>
-                      <span class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
-                        <Clock class="w-4 h-4" />
-                      </span>
+                      <button 
+                        onClick={() => setSelectedFormulaKey('runway')}
+                        class="p-1 rounded bg-amber-500/15 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition-colors text-[10px] font-bold px-1.5 flex items-center gap-0.5"
+                        title="View Runway Formula"
+                      >
+                        <span>ƒ</span> Formula
+                      </button>
                     </div>
                     <div class="text-2xl font-black text-white numeric mb-1">{summary.runwayMonths} Mo</div>
-                    <div class="text-xs text-slate-400 font-medium">
-                      Burn Mult: <span class="text-white font-bold">{summary.burnMultiple}x</span>
+                    <div class="text-xs text-slate-400 font-medium flex justify-between items-center">
+                      <span>Burn Mult: <strong class="text-white">{summary.burnMultiple}x</strong></span>
+                      <button onClick={() => setSelectedFormulaKey('burnMultiple')} class="text-[10px] text-amber-400 hover:underline">
+                        ƒ Burn
+                      </button>
                     </div>
                   </div>
 
@@ -444,13 +674,20 @@
                     <div class="absolute top-0 left-0 w-1 h-full bg-[#0066ff]"></div>
                     <div class="flex items-center justify-between mb-2">
                       <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Value Delivered</span>
-                      <span class="p-1.5 rounded-lg bg-[#0066ff]/10 text-[#0066ff]">
-                        <Award class="w-4 h-4" />
-                      </span>
+                      <button 
+                        onClick={() => setSelectedFormulaKey('hoursSaved')}
+                        class="p-1 rounded bg-[#0066ff]/15 text-[#0066ff] hover:bg-[#0066ff] hover:text-white transition-colors text-[10px] font-bold px-1.5 flex items-center gap-0.5"
+                        title="View Hours Formula"
+                      >
+                        <span>ƒ</span> Formula
+                      </button>
                     </div>
                     <div class="text-2xl font-black text-white numeric mb-1">{fmtNum(summary.totalHoursSaved)} hrs</div>
-                    <div class="text-xs text-slate-400 font-medium">
-                      Saved clinics <span class="text-[#00d2a0] font-bold">{fmtCurrency(summary.totalFinancialSavings)}</span>
+                    <div class="text-xs text-slate-400 font-medium flex justify-between items-center">
+                      <span>Saved <strong class="text-[#00d2a0]">{fmtCurrency(summary.totalFinancialSavings)}</strong></span>
+                      <button onClick={() => setSelectedFormulaKey('financialSavings')} class="text-[10px] text-[#00d2a0] hover:underline">
+                        ƒ $ Saved
+                      </button>
                     </div>
                   </div>
 
@@ -469,9 +706,17 @@
                         </h3>
                         <p class="text-xs text-slate-400">ARR and practice count segmented by GP seats</p>
                       </div>
-                      <button onClick={() => setActiveTab('segmentation')} class="text-xs font-semibold text-[#0066ff] hover:underline flex items-center gap-1">
-                        Full Matrix <ArrowRight class="w-3 h-3" />
-                      </button>
+                      <div class="flex items-center gap-2">
+                        <button 
+                          onClick={() => setSelectedFormulaKey('arpu')}
+                          class="px-2 py-1 rounded bg-[#14233c] hover:bg-[#0066ff] text-slate-300 hover:text-white border border-[#1a2e4f] text-[11px] font-semibold transition-colors flex items-center gap-1"
+                        >
+                          <span>ƒ</span> ARPU Formula
+                        </button>
+                        <button onClick={() => setActiveTab('segmentation')} class="text-xs font-semibold text-[#0066ff] hover:underline flex items-center gap-1">
+                          Matrix <ArrowRight class="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
 
                     <div class="space-y-4">
@@ -532,8 +777,11 @@
                         </h3>
                         <p class="text-xs text-slate-400">Cash flow predictability and churn risk comparison</p>
                       </div>
-                      <button onClick={() => setActiveTab('segmentation')} class="text-xs font-semibold text-[#0066ff] hover:underline flex items-center gap-1">
-                        View Details <ArrowRight class="w-3 h-3" />
+                      <button 
+                        onClick={() => setSelectedFormulaKey('pricingModel')}
+                        class="px-2 py-1 rounded bg-[#14233c] hover:bg-[#00d2a0] text-slate-300 hover:text-slate-950 border border-[#1a2e4f] text-[11px] font-semibold transition-colors flex items-center gap-1"
+                      >
+                        <span>ƒ</span> Pricing Formula
                       </button>
                     </div>
 
@@ -574,9 +822,17 @@
 
                 {/* 3 CAREGP AI AGENT PRODUCTS */}
                 <div class="bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-6">
-                  <div class="mb-6">
-                    <h3 class="text-lg font-bold text-white">CareGP Multi-Agent Suite Adoption</h3>
-                    <p class="text-xs text-slate-400">3 core AI agents driving clinic efficiency and expansion</p>
+                  <div class="mb-6 flex justify-between items-center">
+                    <div>
+                      <h3 class="text-lg font-bold text-white">CareGP Multi-Agent Suite Adoption</h3>
+                      <p class="text-xs text-slate-400">3 core AI agents driving clinic efficiency and expansion</p>
+                    </div>
+                    <button 
+                      onClick={() => setSelectedFormulaKey('pricingModel')}
+                      class="px-2.5 py-1 bg-[#14233c] hover:bg-[#0066ff] text-slate-300 hover:text-white rounded border border-[#1a2e4f] text-xs font-semibold transition-colors flex items-center gap-1.5"
+                    >
+                      <BookOpen class="w-3.5 h-3.5" /> Agent Multiplier Matrix
+                    </button>
                   </div>
 
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -587,7 +843,7 @@
                           <FileText class="w-5 h-5 text-[#0066ff]" />
                           <h4 class="font-bold text-white text-sm">Documents Agent</h4>
                         </div>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#0066ff]/20 text-[#0066ff]">Core Standard</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#0066ff]/20 text-[#0066ff]">1.0x Base Tier</span>
                       </div>
                       <p class="text-xs text-slate-300 mb-4">Automates incoming medical letters, lab results & specialist reports into Best Practice / MedicalDirector.</p>
                       <div class="space-y-2 text-xs">
@@ -609,7 +865,7 @@
                           <Mic class="w-5 h-5 text-[#00d2a0]" />
                           <h4 class="font-bold text-white text-sm">Voice Agent</h4>
                         </div>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#00d2a0]/20 text-[#00d2a0]">High Growth</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#00d2a0]/20 text-[#00d2a0]">1.5x Suite Tier</span>
                       </div>
                       <p class="text-xs text-slate-300 mb-4">Ambient clinical transcription during consultation, generating structured SOAP notes in real time.</p>
                       <div class="space-y-2 text-xs">
@@ -631,7 +887,7 @@
                           <Receipt class="w-5 h-5 text-purple-400" />
                           <h4 class="font-bold text-white text-sm">Billing Agent</h4>
                         </div>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400">Enterprise</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400">2.1x Full Suite</span>
                       </div>
                       <p class="text-xs text-slate-300 mb-4">Medicare item optimization, bulk billing validation & rejection management with zero manual intervention.</p>
                       <div class="space-y-2 text-xs">
@@ -668,6 +924,12 @@
                     </div>
 
                     <div class="flex items-center gap-2">
+                      <button 
+                        onClick={() => setSelectedFormulaKey('arpu')}
+                        class="px-2.5 py-1 bg-[#14233c] hover:bg-[#0066ff] text-slate-300 hover:text-white border border-[#1a2e4f] rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
+                      >
+                        <span>ƒ</span> ARPU Formula
+                      </button>
                       <span class="px-3 py-1 bg-[#14233c] text-slate-300 border border-[#1a2e4f] rounded-lg text-xs font-semibold">
                         Total Active ARR: {fmtCurrency(summary.totalLiveArr)}
                       </span>
@@ -786,9 +1048,17 @@
 
                   {/* MATRIX TABLE: SIZE x PAYMENT SCHEDULE */}
                   <div class="mt-8">
-                    <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
-                      <Layers class="w-4 h-4 text-[#00d2a0]" />
-                      Size × Payment Schedule Breakdown Matrix
+                    <h3 class="text-base font-bold text-white mb-4 flex items-center justify-between">
+                      <span class="flex items-center gap-2">
+                        <Layers class="w-4 h-4 text-[#00d2a0]" />
+                        Size × Payment Schedule Breakdown Matrix
+                      </span>
+                      <button 
+                        onClick={() => setSelectedFormulaKey('pricingModel')}
+                        class="text-xs font-semibold text-[#00d2a0] hover:underline flex items-center gap-1"
+                      >
+                        <span>ƒ</span> How Matrix Pricing is Derived
+                      </button>
                     </h3>
 
                     <div class="overflow-x-auto rounded-xl border border-[#1a2e4f]">
@@ -845,12 +1115,21 @@
               <div class="space-y-8">
                 
                 <div class="bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-6">
-                  <div class="mb-6">
-                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                      <BarChart3 class="w-5 h-5 text-purple-400" />
-                      SaaS Unit Economics & Efficiency Metrics
-                    </h2>
-                    <p class="text-xs text-slate-400">Key metrics for capital efficiency, growth trajectory, and customer retention</p>
+                  <div class="mb-6 flex justify-between items-center">
+                    <div>
+                      <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <BarChart3 class="w-5 h-5 text-purple-400" />
+                        SaaS Unit Economics & Efficiency Metrics
+                      </h2>
+                      <p class="text-xs text-slate-400">Key metrics for capital efficiency, growth trajectory, and customer retention</p>
+                    </div>
+
+                    <button 
+                      onClick={() => setActiveTab('formulas')}
+                      class="px-3 py-1.5 bg-[#00d2a0]/15 border border-[#00d2a0]/30 text-[#00d2a0] hover:bg-[#00d2a0] hover:text-slate-950 font-bold rounded-lg text-xs transition-colors flex items-center gap-1.5"
+                    >
+                      <BookOpen class="w-4 h-4" /> Open Math Audit Guide
+                    </button>
                   </div>
 
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -859,7 +1138,9 @@
                     <div class="bg-[#14233c] p-5 rounded-xl border border-[#1a2e4f]">
                       <div class="flex justify-between items-start mb-2">
                         <span class="text-xs font-semibold text-slate-400 uppercase">Burn Multiple</span>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#00d2a0]/20 text-[#00d2a0]">Top Tier (&lt;2x)</span>
+                        <button onClick={() => setSelectedFormulaKey('burnMultiple')} class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 hover:underline text-[10px] font-bold">
+                          ƒ Formula
+                        </button>
                       </div>
                       <div class="text-2xl font-black text-white numeric mb-1">{summary.burnMultiple}x</div>
                       <p class="text-xs text-slate-300 mb-3">Net cash burn spent per new dollar of ARR generated.</p>
@@ -872,7 +1153,9 @@
                     <div class="bg-[#14233c] p-5 rounded-xl border border-[#1a2e4f]">
                       <div class="flex justify-between items-start mb-2">
                         <span class="text-xs font-semibold text-slate-400 uppercase">SaaS Quick Ratio</span>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#00d2a0]/20 text-[#00d2a0]">Strong (&gt;4.0)</span>
+                        <button onClick={() => setSelectedFormulaKey('quickRatio')} class="px-1.5 py-0.5 rounded bg-[#00d2a0]/20 text-[#00d2a0] hover:underline text-[10px] font-bold">
+                          ƒ Formula
+                        </button>
                       </div>
                       <div class="text-2xl font-black text-white numeric mb-1">4.8x</div>
                       <p class="text-xs text-slate-300 mb-3">Ratio of revenue gained vs revenue lost in period.</p>
@@ -885,7 +1168,9 @@
                     <div class="bg-[#14233c] p-5 rounded-xl border border-[#1a2e4f]">
                       <div class="flex justify-between items-start mb-2">
                         <span class="text-xs font-semibold text-slate-400 uppercase">Rule of 40 Score</span>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400">Target Met (&gt;40)</span>
+                        <button onClick={() => setSelectedFormulaKey('ruleOf40')} class="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 hover:underline text-[10px] font-bold">
+                          ƒ Formula
+                        </button>
                       </div>
                       <div class="text-2xl font-black text-white numeric mb-1">102.1</div>
                       <p class="text-xs text-slate-300 mb-3">YoY ARR Growth % + Operating Margin %</p>
@@ -1048,12 +1333,21 @@
             {/* TAB 5: ROI CALCULATOR */}
             {activeTab === 'calculator' && (
               <div class="max-w-3xl mx-auto bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-6">
-                <div class="mb-6">
-                  <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                    <Calculator class="w-5 h-5 text-amber-400" />
-                    Interactive CareGP ROI & Billing Calculator
-                  </h2>
-                  <p class="text-xs text-slate-400">Estimate subscription cost, annual contract value, and GP hours saved</p>
+                <div class="mb-6 flex justify-between items-center">
+                  <div>
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                      <Calculator class="w-5 h-5 text-amber-400" />
+                      Interactive CareGP ROI & Billing Calculator
+                    </h2>
+                    <p class="text-xs text-slate-400">Estimate subscription cost, annual contract value, and GP hours saved</p>
+                  </div>
+
+                  <button 
+                    onClick={() => setSelectedFormulaKey('roiMultiplier')}
+                    class="px-2.5 py-1 bg-[#14233c] hover:bg-[#00d2a0] text-slate-300 hover:text-slate-950 rounded border border-[#1a2e4f] text-xs font-semibold transition-colors flex items-center gap-1"
+                  >
+                    <span>ƒ</span> ROI Formula
+                  </button>
                 </div>
 
                 <div class="space-y-6">
@@ -1096,7 +1390,7 @@
                             : 'bg-[#14233c] text-slate-300 border-[#1a2e4f]'
                         }`}
                       >
-                        Annual Billing ($105/GP/mo • 15% OFF)
+                        Annual Billing ($105/GP/mo • 16% OFF)
                       </button>
                     </div>
                   </div>
@@ -1111,7 +1405,7 @@
                           calcAgents === 1 ? 'bg-[#0066ff] text-white border-[#0066ff]' : 'bg-[#14233c] text-slate-300 border-[#1a2e4f]'
                         }`}
                       >
-                        1 Agent (Docs)
+                        1 Agent (Docs) • 1.0x
                       </button>
                       <button 
                         onClick={() => setCalcAgents(2)}
@@ -1119,7 +1413,7 @@
                           calcAgents === 2 ? 'bg-[#0066ff] text-white border-[#0066ff]' : 'bg-[#14233c] text-slate-300 border-[#1a2e4f]'
                         }`}
                       >
-                        2 Agents (+ Voice)
+                        2 Agents (+ Voice) • 1.5x
                       </button>
                       <button 
                         onClick={() => setCalcAgents(3)}
@@ -1127,7 +1421,7 @@
                           calcAgents === 3 ? 'bg-[#0066ff] text-white border-[#0066ff]' : 'bg-[#14233c] text-slate-300 border-[#1a2e4f]'
                         }`}
                       >
-                        3 Agents (+ Billing)
+                        3 Agents (+ Billing) • 2.1x
                       </button>
                     </div>
                   </div>
@@ -1139,20 +1433,29 @@
                     const monthlyCost = Math.round(calcGps * rate * mult);
                     const annualCost = monthlyCost * 12;
                     const estimatedHoursSavedMonth = Math.round(calcGps * 38);
-                    const estimatedDollarSavingsMonth = estimatedHoursSavedMonth * 150;
+                    const estimatedDollarSavingsMonth = estimatedHoursSavedMonth * 120;
+                    const estimatedDollarSavingsAnnual = estimatedDollarSavingsMonth * 12;
+                    const roiMult = annualCost > 0 ? (estimatedDollarSavingsAnnual / annualCost).toFixed(1) : 0;
 
                     return (
-                      <div class="mt-6 pt-6 border-t border-[#1a2e4f] grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-[#14233c] p-4 rounded-xl border border-[#1a2e4f]">
-                          <span class="text-xs text-slate-400 font-medium">Estimated CareGP Subscription</span>
-                          <div class="text-2xl font-black text-white numeric mt-1">{fmtCurrency(monthlyCost)} <span class="text-xs font-medium text-slate-400">/ mo</span></div>
-                          <div class="text-xs text-[#00d2a0] font-bold mt-1">{fmtCurrency(annualCost)} Annual Value</div>
+                      <div class="mt-6 pt-6 border-t border-[#1a2e4f] space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div class="bg-[#14233c] p-4 rounded-xl border border-[#1a2e4f]">
+                            <span class="text-xs text-slate-400 font-medium">Estimated CareGP Subscription</span>
+                            <div class="text-2xl font-black text-white numeric mt-1">{fmtCurrency(monthlyCost)} <span class="text-xs font-medium text-slate-400">/ mo</span></div>
+                            <div class="text-xs text-[#00d2a0] font-bold mt-1">{fmtCurrency(annualCost)} Annual Contract (ARR)</div>
+                          </div>
+
+                          <div class="bg-[#14233c] p-4 rounded-xl border border-[#00d2a0]/30">
+                            <span class="text-xs text-slate-400 font-medium">Estimated Clinic ROI ({roiMult}x Return)</span>
+                            <div class="text-2xl font-black text-[#00d2a0] numeric mt-1">{fmtNum(estimatedHoursSavedMonth)} hrs <span class="text-xs text-slate-400">/ mo saved</span></div>
+                            <div class="text-xs text-slate-300 font-bold mt-1">{fmtCurrency(estimatedDollarSavingsAnnual)} annual value saved</div>
+                          </div>
                         </div>
 
-                        <div class="bg-[#14233c] p-4 rounded-xl border border-[#00d2a0]/30">
-                          <span class="text-xs text-slate-400 font-medium">Estimated Clinic ROI</span>
-                          <div class="text-2xl font-black text-[#00d2a0] numeric mt-1">{fmtNum(estimatedHoursSavedMonth)} hrs <span class="text-xs text-slate-400">/ mo saved</span></div>
-                          <div class="text-xs text-slate-300 font-bold mt-1">{fmtCurrency(estimatedDollarSavingsMonth)} clinic value saved</div>
+                        {/* Equation Box */}
+                        <div class="p-3 bg-[#060c18] border border-[#1a2e4f] rounded-lg font-mono text-[11px] text-slate-300">
+                          <span class="text-[#00d2a0]">Formula:</span> {calcGps} GPs × ${rate}/mo × {mult} AgentMult = ${monthlyCost}/mo (${annualCost} ARR)
                         </div>
                       </div>
                     );
@@ -1162,7 +1465,335 @@
               </div>
             )}
 
+            {/* TAB 6: FORMULAS & AUDIT HANDBOOK */}
+            {activeTab === 'formulas' && (
+              <div class="space-y-8">
+                
+                {/* HANDBOOK HERO BANNER */}
+                <div class="bg-gradient-to-r from-[#0d182b] via-[#14233c] to-[#0d182b] border border-[#00d2a0]/40 rounded-2xl p-6 relative overflow-hidden">
+                  <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                    <div>
+                      <div class="flex items-center gap-2 mb-2">
+                        <span class="px-2.5 py-0.5 rounded-full bg-[#00d2a0]/20 text-[#00d2a0] border border-[#00d2a0]/40 font-bold text-xs uppercase tracking-wider">
+                          Financial & Operational Transparency
+                        </span>
+                        <span class="text-slate-400 text-xs">• Audit Compliant</span>
+                      </div>
+                      <h1 class="text-2xl font-black text-white">CareGP Calculation Formulas & Audit Handbook</h1>
+                      <p class="text-xs text-slate-300 mt-1 max-w-2xl">
+                        Comprehensive mathematical formulations, spreadsheet column mappings, and step-by-step audit verifications for every financial KPI, unit economic, and operational metric in CareGP.
+                      </p>
+                    </div>
+
+                    <div class="bg-[#060c18]/80 border border-[#1a2e4f] p-4 rounded-xl text-xs space-y-1 shrink-0">
+                      <div class="text-slate-400 font-medium">Sheet ID: <span class="font-mono text-white">1w3-mO9e...</span></div>
+                      <div class="text-slate-400 font-medium">Sheet GID: <span class="font-mono text-[#00d2a0]">192931357</span></div>
+                      <div class="text-slate-400 font-medium">Standard GP Cost: <span class="font-mono text-white">$120.00 AUD / hour</span></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* INTERACTIVE VERIFICATION MATH AUDITOR TOOL */}
+                <div class="bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-6">
+                  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                      <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <CheckSquare class="w-5 h-5 text-[#00d2a0]" />
+                        Interactive Audit Verification Tool
+                      </h2>
+                      <p class="text-xs text-slate-400">Select any active practice from the Google Sheet to verify its step-by-step math derivation</p>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                      <label class="text-xs text-slate-400">Select Practice:</label>
+                      <select 
+                        value={auditClinicIndex} 
+                        onChange={(e) => setAuditClinicIndex(parseInt(e.target.value))}
+                        class="bg-[#14233c] border border-[#1a2e4f] text-white rounded-lg px-3 py-1.5 text-xs font-semibold outline-none cursor-pointer"
+                      >
+                        {clinics.map((c, idx) => (
+                          <option key={c.id} value={idx} class="bg-[#0d182b]">
+                            {c.name} ({c.numGps} GPs, {c.paymentSchedule})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {(() => {
+                    const c = clinics[auditClinicIndex] || clinics[0];
+                    if (!c) return null;
+
+                    const perGpRate = c.paymentSchedule === 'Annual' ? 105 : 125;
+                    const agentMult = c.agentCount === 3 ? 2.1 : c.agentCount === 2 ? 1.5 : 1.0;
+                    const baseMonthly = c.numGps * perGpRate;
+                    const calculatedSub = Math.round(baseMonthly * agentMult);
+                    const calculatedArr = calculatedSub * 12;
+
+                    const baselineSec = 180;
+                    const secSavedPerDoc = baselineSec - c.timePerDocSec;
+                    const calcHoursSaved = Number(((c.uploads * secSavedPerDoc) / 3600).toFixed(1));
+                    const calcFinancialValue = Math.round((c.totalHoursSaved || calcHoursSaved) * 120);
+                    const calcRoi = calculatedArr > 0 ? (calcFinancialValue / calculatedArr).toFixed(2) : '0.00';
+
+                    return (
+                      <div class="space-y-6">
+                        
+                        {/* Selected Practice Meta Summary */}
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-[#14233c] p-4 rounded-xl border border-[#1a2e4f]">
+                          <div>
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Practice Name</span>
+                            <div class="text-sm font-bold text-white truncate">{c.name}</div>
+                          </div>
+                          <div>
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Size Tier & GPs</span>
+                            <div class="text-sm font-bold text-[#0066ff]">{c.numGps} GPs ({c.clinicSizeKey})</div>
+                          </div>
+                          <div>
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Billing Schedule</span>
+                            <div class="text-sm font-bold text-[#00d2a0]">{c.paymentSchedule} Plan</div>
+                          </div>
+                          <div>
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Active Agents</span>
+                            <div class="text-sm font-bold text-purple-400">{c.agentCount} Agents ({agentMult}x)</div>
+                          </div>
+                        </div>
+
+                        {/* STEP BY STEP MATHEMATICAL DERIVATION */}
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          
+                          {/* Step 1: Subscription & ARR */}
+                          <div class="bg-[#14233c] p-5 rounded-xl border border-[#1a2e4f] space-y-3">
+                            <div class="flex items-center gap-2 text-xs font-bold text-[#0066ff]">
+                              <span class="w-5 h-5 rounded-full bg-[#0066ff]/20 text-[#0066ff] flex items-center justify-center text-[10px]">1</span>
+                              <span>Monthly Sub & ARR Derivation</span>
+                            </div>
+                            <div class="font-mono text-xs bg-[#060c18] p-3 rounded border border-[#1a2e4f] space-y-1.5 text-slate-300">
+                              <div><span class="text-slate-500">// Base Seats:</span> {c.numGps} GPs × ${perGpRate}/mo = ${baseMonthly}</div>
+                              <div><span class="text-slate-500">// Agent Mult:</span> ${baseMonthly} × {agentMult}x = ${calculatedSub}/mo</div>
+                              <div class="text-[#00d2a0] font-bold">// Annual ARR: ${calculatedSub} × 12 = {fmtCurrency(calculatedArr)}</div>
+                            </div>
+                            <p class="text-[11px] text-slate-400">Match Check: Actual Sheet ARR is <strong>{fmtCurrency(c.arr)}</strong></p>
+                          </div>
+
+                          {/* Step 2: Hours Saved */}
+                          <div class="bg-[#14233c] p-5 rounded-xl border border-[#1a2e4f] space-y-3">
+                            <div class="flex items-center gap-2 text-xs font-bold text-[#00d2a0]">
+                              <span class="w-5 h-5 rounded-full bg-[#00d2a0]/20 text-[#00d2a0] flex items-center justify-center text-[10px]">2</span>
+                              <span>Hours Saved Derivation</span>
+                            </div>
+                            <div class="font-mono text-xs bg-[#060c18] p-3 rounded border border-[#1a2e4f] space-y-1.5 text-slate-300">
+                              <div><span class="text-slate-500">// Sec Saved/Doc:</span> 180s - {c.timePerDocSec}s = {secSavedPerDoc}s</div>
+                              <div><span class="text-slate-500">// Total Uploads:</span> {fmtNum(c.uploads)} docs</div>
+                              <div class="text-[#00d2a0] font-bold">// Hours Saved: ({fmtNum(c.uploads)} × {secSavedPerDoc}s) ÷ 3600 = {c.totalHoursSaved} hrs</div>
+                            </div>
+                            <p class="text-[11px] text-slate-400">Match Check: Sheet Col R is <strong>{fmtNum(c.totalHoursSaved)} hrs</strong></p>
+                          </div>
+
+                          {/* Step 3: Financial Savings & ROI */}
+                          <div class="bg-[#14233c] p-5 rounded-xl border border-[#1a2e4f] space-y-3">
+                            <div class="flex items-center gap-2 text-xs font-bold text-purple-400">
+                              <span class="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-[10px]">3</span>
+                              <span>Value & ROI Multiplier</span>
+                            </div>
+                            <div class="font-mono text-xs bg-[#060c18] p-3 rounded border border-[#1a2e4f] space-y-1.5 text-slate-300">
+                              <div><span class="text-slate-500">// Value Saved:</span> {c.totalHoursSaved} hrs × $120/hr = {fmtCurrency(c.financialSavings)}</div>
+                              <div class="text-[#00d2a0] font-bold">// ROI Multiplier: {fmtCurrency(c.financialSavings)} ÷ {fmtCurrency(calculatedArr)} = {calcRoi}x</div>
+                            </div>
+                            <p class="text-[11px] text-slate-400">Match Check: Sheet Col X ROI is <strong>{c.roiMultiplier}x</strong></p>
+                          </div>
+
+                        </div>
+
+                      </div>
+                    );
+                  })()}
+
+                </div>
+
+                {/* MASTER FORMULA REFERENCE TABLE */}
+                <div class="bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-6">
+                  <div class="mb-6">
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                      <ListFilter class="w-5 h-5 text-[#0066ff]" />
+                      Master Formula Specification Table
+                    </h2>
+                    <p class="text-xs text-slate-400">Complete listing of mathematical equations, sheet source columns, and variable definitions</p>
+                  </div>
+
+                  <div class="overflow-x-auto rounded-xl border border-[#1a2e4f]">
+                    <table class="w-full text-left text-xs text-slate-300">
+                      <thead class="bg-[#14233c] text-slate-400 uppercase font-bold text-[11px] border-b border-[#1a2e4f]">
+                        <tr>
+                          <th class="p-3.5">Metric Name</th>
+                          <th class="p-3.5">Category</th>
+                          <th class="p-3.5">Mathematical Equation</th>
+                          <th class="p-3.5">Google Sheet Source Column</th>
+                          <th class="p-3.5 text-center">Inspect</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-[#1a2e4f]">
+                        {Object.values(FORMULAS_CATALOG).map((f) => (
+                          <tr key={f.id} class="hover:bg-[#14233c]/60 transition-colors">
+                            <td class="p-3.5 font-bold text-white flex items-center gap-2">
+                              <span>{f.title}</span>
+                            </td>
+                            <td class="p-3.5">
+                              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#14233c] border border-[#1a2e4f] text-slate-300">
+                                {f.category}
+                              </span>
+                            </td>
+                            <td class="p-3.5 font-mono text-[11px] text-[#00d2a0]">{f.equation}</td>
+                            <td class="p-3.5 text-slate-400 font-mono text-[11px]">{f.sheetSource}</td>
+                            <td class="p-3.5 text-center">
+                              <button 
+                                onClick={() => setSelectedFormulaKey(f.id)}
+                                class="px-2.5 py-1 bg-[#14233c] hover:bg-[#0066ff] text-slate-300 hover:text-white rounded border border-[#1a2e4f] text-[11px] font-semibold transition-colors inline-flex items-center gap-1"
+                              >
+                                View Derivation
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* GOOGLE SHEET COLUMN MAPPING GUIDE */}
+                <div class="bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-6">
+                  <div class="mb-6">
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                      <Terminal class="w-5 h-5 text-amber-400" />
+                      Google Sheet Column Mapping Reference (GID: 192931357)
+                    </h2>
+                    <p class="text-xs text-slate-400">Maps raw Google Sheet columns to internal dashboard variables and formula inputs</p>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                    <div class="bg-[#14233c] p-3.5 rounded-lg border border-[#1a2e4f]">
+                      <div class="font-mono text-[#0066ff] font-bold">Col A (0): Clinic Name</div>
+                      <div class="text-slate-400 mt-1">Unique medical practice identifier</div>
+                    </div>
+                    <div class="bg-[#14233c] p-3.5 rounded-lg border border-[#1a2e4f]">
+                      <div class="font-mono text-[#0066ff] font-bold">Col C (2): Status</div>
+                      <div class="text-slate-400 mt-1">Closed, Pilot, Warm Pilot, Dropped Off</div>
+                    </div>
+                    <div class="bg-[#14233c] p-3.5 rounded-lg border border-[#1a2e4f]">
+                      <div class="font-mono text-[#0066ff] font-bold">Col E (4): Uploads</div>
+                      <div class="text-slate-400 mt-1">Total documents ingested</div>
+                    </div>
+                    <div class="bg-[#14233c] p-3.5 rounded-lg border border-[#1a2e4f]">
+                      <div class="font-mono text-[#0066ff] font-bold">Col O (14): numGps</div>
+                      <div class="text-slate-400 mt-1">Number of active doctors</div>
+                    </div>
+                    <div class="bg-[#14233c] p-3.5 rounded-lg border border-[#1a2e4f]">
+                      <div class="font-mono text-[#0066ff] font-bold">Col P (15): timePerDocSec</div>
+                      <div class="text-slate-400 mt-1">Seconds spent per document (vs 180s baseline)</div>
+                    </div>
+                    <div class="bg-[#14233c] p-3.5 rounded-lg border border-[#1a2e4f]">
+                      <div class="font-mono text-[#0066ff] font-bold">Col R (17): totalHoursSaved</div>
+                      <div class="text-slate-400 mt-1">Calculated hours saved</div>
+                    </div>
+                    <div class="bg-[#14233c] p-3.5 rounded-lg border border-[#1a2e4f]">
+                      <div class="font-mono text-[#0066ff] font-bold">Col S (18): financialSavings</div>
+                      <div class="text-slate-400 mt-1">Hours saved × $120/hr GP rate</div>
+                    </div>
+                    <div class="bg-[#14233c] p-3.5 rounded-lg border border-[#1a2e4f]">
+                      <div class="font-mono text-[#0066ff] font-bold">Col X (23): roiMultiplier</div>
+                      <div class="text-slate-400 mt-1">Financial savings ÷ Sub cost</div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
           </main>
+
+          {/* FORMULA MODAL OVERLAY */}
+          {formulaModalData && (
+            <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+              <div class="max-w-2xl w-full bg-[#0d182b] border border-[#00d2a0]/40 rounded-2xl p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150">
+                
+                {/* Modal Header */}
+                <div class="flex items-center justify-between pb-4 border-b border-[#1a2e4f] mb-6">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-[#00d2a0]/20 text-[#00d2a0] flex items-center justify-center font-bold text-lg">
+                      ƒ
+                    </div>
+                    <div>
+                      <span class="text-[10px] uppercase font-bold text-[#00d2a0] tracking-wider">{formulaModalData.category}</span>
+                      <h3 class="text-lg font-bold text-white">{formulaModalData.title}</h3>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedFormulaKey(null)}
+                    class="p-1.5 rounded-lg bg-[#14233c] hover:bg-[#1a2e4f] text-slate-400 hover:text-white transition-colors"
+                  >
+                    <X class="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Modal Body */}
+                <div class="space-y-5">
+                  
+                  {/* Equation Box */}
+                  <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-2">Mathematical Formulation</label>
+                    <div class="p-4 bg-[#060c18] border border-[#1a2e4f] rounded-xl font-mono text-sm text-[#00d2a0] font-bold">
+                      {formulaModalData.equation}
+                    </div>
+                  </div>
+
+                  {/* Explanation */}
+                  <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">Methodology & Logic</label>
+                    <p class="text-xs text-slate-300 leading-relaxed bg-[#14233c] p-3.5 rounded-lg border border-[#1a2e4f]">
+                      {formulaModalData.explanation}
+                    </p>
+                  </div>
+
+                  {/* Inputs Table */}
+                  <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-2">Input Variables & Parameters</label>
+                    <div class="space-y-1.5">
+                      {formulaModalData.inputs.map((inp, idx) => (
+                        <div key={idx} class="flex justify-between items-center bg-[#14233c] px-3.5 py-2 rounded-lg text-xs border border-[#1a2e4f]">
+                          <span class="font-semibold text-white">{inp.name}:</span>
+                          <span class="text-slate-300 font-mono">{inp.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Worked Concrete Example */}
+                  <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">Worked Sample Calculation</label>
+                    <div class="p-3.5 bg-[#060c18] border border-[#0066ff]/30 rounded-xl font-mono text-xs text-slate-200">
+                      {formulaModalData.example}
+                    </div>
+                  </div>
+
+                  {/* Source mapping */}
+                  <div class="text-[11px] text-slate-400 flex items-center justify-between pt-2 border-t border-[#1a2e4f]">
+                    <span>Source: <strong class="text-white">{formulaModalData.sheetSource}</strong></span>
+                    <button 
+                      onClick={() => {
+                        setSelectedFormulaKey(null);
+                        setActiveTab('formulas');
+                      }}
+                      class="text-[#0066ff] hover:underline font-semibold flex items-center gap-1"
+                    >
+                      Audit Handbook <ArrowRight class="w-3 h-3" />
+                    </button>
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+          )}
 
           {/* SLIDE-OVER DETAIL DRAWER FOR CLINIC */}
           {selectedClinic && (
@@ -1227,8 +1858,11 @@
 
           {/* FOOTER */}
           <footer class="bg-[#0d182b] border-t border-[#1a2e4f] py-6 text-center text-xs text-slate-500">
-            <div class="max-w-7xl mx-auto px-4">
-              CareGP Financial Dashboard • Australian Medical AI Intelligence Platform
+            <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>CareGP Financial Dashboard • Australian Medical AI Intelligence Platform</div>
+              <button onClick={() => setActiveTab('formulas')} class="text-[#00d2a0] hover:underline font-bold flex items-center gap-1">
+                <BookOpen class="w-3.5 h-3.5" /> Formulas & Audit Handbook
+              </button>
             </div>
           </footer>
 

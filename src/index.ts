@@ -430,7 +430,25 @@ export class App extends DurableObject {
             topAvgAccuracy,
             topLastUpdated,
             isCached,
-            fetchedAt: new Date().toISOString()
+            fetchedAt: new Date().toISOString(),
+            formulaDefinitions: {
+              arr: "ARR = Monthly Subscription × 12",
+              mrr: "MRR = Live ARR ÷ 12",
+              monthlySubscription: "numGps × perGpMonthlyRate × agentMultiplier",
+              perGpMonthlyRate: "Annual Plan: $105/GP/mo (16% discount) | Monthly Plan: $125/GP/mo",
+              agentMultiplier: "1 Agent (Docs): 1.0× | 2 Agents (+Voice): 1.5× | 3 Agents (+Billing): 2.1×",
+              arpu: "ARPU = Total Category ARR ÷ Active Clinics in Category",
+              nrr: "NRR = [(Start ARR + Expansion ARR - Churn ARR - Downgrade ARR) ÷ Start ARR] × 100%",
+              grr: "GRR = [(Start ARR - Churn ARR - Downgrade ARR) ÷ Start ARR] × 100%",
+              logoChurnRate: "Logo Churn Rate % = (Dropped Off Clinics ÷ Total Clinics) × 100%",
+              runwayMonths: "Cash Runway = Cash Balance ÷ Monthly Net Cash Burn",
+              burnMultiple: "Burn Multiple = (Monthly Net Burn × 12) ÷ Net New ARR",
+              quickRatio: "SaaS Quick Ratio = (New MRR + Expansion MRR) ÷ (Churned MRR + Contraction MRR)",
+              ruleOf40: "Rule of 40 = YoY ARR Growth % + Operating Margin %",
+              financialSavings: "Financial Savings ($) = Total Hours Saved × $120/hr GP Hourly Rate",
+              roiMultiplier: "ROI Multiplier = Financial Savings ($) ÷ Annual CareGP Subscription ($)",
+              cycleTimeReductionPct: "Cycle Time Reduction % = [(180s Baseline - Time per Doc s) ÷ 180s] × 100%"
+            }
           },
           summary: {
             totalClinics,
