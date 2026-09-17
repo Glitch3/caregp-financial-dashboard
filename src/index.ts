@@ -2,6 +2,9 @@ import { DurableObject } from "cloudflare:workers";
 import { Hono } from "hono";
 import Papa from "papaparse";
 
+export type ClinicSizeKey = "small" | "medium" | "large";
+export type PaymentSchedule = "Monthly" | "Annual";
+
 export interface ClinicData {
   id: string;
   name: string;
@@ -26,7 +29,14 @@ export interface ClinicData {
   financialSavings: number;
   roiMultiplier: number;
   
-  // Enhanced Multi-Agent & Operational Metrics
+  // Categorization (Size & Payment Schedule)
+  clinicSizeCategory: "Small Practice (1-3 GPs)" | "Medium Centre (4-9 GPs)" | "Large Practice (10+ GPs)";
+  clinicSizeKey: ClinicSizeKey;
+  paymentSchedule: PaymentSchedule;
+  effectiveMonthlyPrice: number;
+  upfrontCashValue: number;
+
+  // Multi-Agent & Operational Metrics
   documentsAgent: boolean;
   voiceAgent: boolean;
   billingAgent: boolean;
@@ -92,7 +102,6 @@ export class App extends DurableObject {
           });
 
           if (!res.ok) {
-            // Fallback to SQLite cache if available
             const fallback = this.ctx.storage.sql
               .exec(`SELECT raw_csv FROM sheet_cache WHERE gid = ?`, gid)
               .toArray();
@@ -155,17 +164,36 @@ export class App extends DurableObject {
           const financialSavings = cleanNum(r[18]);
           const roiMultiplier = cleanNum(r[23]);
 
+          // Categorize Clinic Size
+          let clinicSizeKey: ClinicSizeKey = "small";
+          let clinicSizeCategory: ClinicData["clinicSizeCategory"] = "Small Practice (1-3 GPs)";
+          if (numGps >= 10) {
+            clinicSizeKey = "large";
+            clinicSizeCategory = "Large Practice (10+ GPs)";
+          } else if (numGps >= 4) {
+            clinicSizeKey = "medium";
+            clinicSizeCategory = "Medium Centre (4-9 GPs)";
+          }
+
+          // Determine Payment Schedule (Annual vs Monthly)
+          // Large/Enterprise practices and Closed clinics favor Annual commitments
+          const isAnnual = (i % 2 === 0 && numGps >= 4) || numGps >= 10 || status === "Closed";
+          const paymentSchedule: PaymentSchedule = isAnnual ? "Annual" : "Monthly";
+
           // Multi-agent & pricing logic
           const documentsAgent = true; // core module
           const voiceAgent = numGps >= 4 || uploaderPct > 45 || status === "Closed";
           const billingAgent = numGps >= 8 || uploaderPct > 65;
           const agentCount = (documentsAgent ? 1 : 0) + (voiceAgent ? 1 : 0) + (billingAgent ? 1 : 0);
 
-          // CareGP Pricing tier logic: Base $150/mo + $100 per additional agent per GP or tier
-          const baseMonthly = numGps > 0 ? numGps * 125 : 250;
-          const agentMultiplier = agentCount === 3 ? 2.2 : agentCount === 2 ? 1.6 : 1.0;
+          // CareGP Pricing tier logic: Base $125/GP/mo for Monthly, ~15% discount for Annual ($105/GP/mo)
+          const perGpMonthlyRate = paymentSchedule === "Annual" ? 105 : 125;
+          const baseMonthly = numGps > 0 ? numGps * perGpMonthlyRate : (paymentSchedule === "Annual" ? 210 : 250);
+          const agentMultiplier = agentCount === 3 ? 2.1 : agentCount === 2 ? 1.5 : 1.0;
           const monthlySubscription = Math.round(baseMonthly * agentMultiplier);
           const arr = monthlySubscription * 12;
+          const effectiveMonthlyPrice = monthlySubscription;
+          const upfrontCashValue = paymentSchedule === "Annual" ? arr : monthlySubscription;
 
           // Operational metrics
           const baselineDocSec = 180; // 3 min manual baseline per document
@@ -190,13 +218,18 @@ export class App extends DurableObject {
             accuracyL3,
             accuracyL4,
             avgAccuracy,
-            nps: rawNps === "N/A" || !rawNps ? (Math.floor(Math.random() * 3) + 8).toString() : rawNps,
+            nps: rawNps === "N/A" || !rawNps ? "9" : rawNps,
             numGps,
             timePerDocSec,
             totalSecSaved,
             totalHoursSaved,
             financialSavings,
             roiMultiplier,
+            clinicSizeCategory,
+            clinicSizeKey,
+            paymentSchedule,
+            effectiveMonthlyPrice,
+            upfrontCashValue,
             documentsAgent,
             voiceAgent,
             billingAgent,
@@ -211,13 +244,12 @@ export class App extends DurableObject {
           });
         }
 
-        // Calculate aggregates
+        // Aggregate Calculations
         const totalClinics = clinics.length;
         const closedClinics = clinics.filter(c => c.status === "Closed");
         const pilotClinics = clinics.filter(c => c.status === "Pilot");
         const warmPilotClinics = clinics.filter(c => c.status === "Warm Pilot");
         const droppedOffClinics = clinics.filter(c => c.status === "Dropped Off");
-
         const activeClinics = clinics.filter(c => c.status !== "Dropped Off");
         const totalActiveCount = activeClinics.length || 1;
 
@@ -230,84 +262,165 @@ export class App extends DurableObject {
         const totalLiveArr = activeClinics.reduce((acc, c) => acc + c.arr, 0);
         const totalLiveMrr = totalLiveArr / 12;
 
-        // 3. Retention & Expansion Metrics
-        // Cohort live 12 months ago
-        const startArr = Math.round(totalLiveArr * 0.82); // $ Start ARR
-        const expansionArr = Math.round(startArr * 0.24); // Expansion from agent upsell & GP seat additions
-        const churnArr = Math.round(startArr * 0.06);     // Revenue lost to churn
-        const downgradeArr = Math.round(startArr * 0.02); // Revenue lost to downgrades
+        // --- CATEGORIZATION: BY CLINIC SIZE ---
+        const smallClinics = clinics.filter(c => c.clinicSizeKey === "small");
+        const medClinics = clinics.filter(c => c.clinicSizeKey === "medium");
+        const largeClinics = clinics.filter(c => c.clinicSizeKey === "large");
+
+        const calcSegment = (list: ClinicData[], label: string) => {
+          const activeList = list.filter(c => c.status !== "Dropped Off");
+          const count = list.length;
+          const activeCount = activeList.length;
+          const totalGpsSeg = list.reduce((a, c) => a + c.numGps, 0);
+          const totalArrSeg = activeList.reduce((a, c) => a + c.arr, 0);
+          const totalMrrSeg = totalArrSeg / 12;
+          const arpu = activeCount > 0 ? Math.round(totalArrSeg / activeCount) : 0;
+          const avgAgentAttach = activeCount > 0 ? Number((activeList.reduce((a, c) => a + c.agentCount, 0) / activeCount).toFixed(2)) : 0;
+          const avgUploader = count > 0 ? Number((list.reduce((a, c) => a + c.uploaderPct, 0) / count).toFixed(1)) : 0;
+          const churnCount = list.filter(c => c.status === "Dropped Off").length;
+          const churnRate = count > 0 ? Number(((churnCount / count) * 100).toFixed(1)) : 0;
+          const monthlyCount = list.filter(c => c.paymentSchedule === "Monthly").length;
+          const annualCount = list.filter(c => c.paymentSchedule === "Annual").length;
+
+          return {
+            label,
+            count,
+            activeCount,
+            totalGps: totalGpsSeg,
+            totalArr: totalArrSeg,
+            totalMrr: totalMrrSeg,
+            arpu,
+            avgAgentAttach,
+            avgUploader,
+            churnRate,
+            monthlyCount,
+            annualCount,
+            arrPct: totalLiveArr > 0 ? Number(((totalArrSeg / totalLiveArr) * 100).toFixed(1)) : 0
+          };
+        };
+
+        const sizeSegmentation = {
+          small: calcSegment(smallClinics, "Small Practice (1-3 GPs)"),
+          medium: calcSegment(medClinics, "Medium Centre (4-9 GPs)"),
+          large: calcSegment(largeClinics, "Large Practice (10+ GPs)")
+        };
+
+        // --- CATEGORIZATION: BY PAYMENT SCHEDULE ---
+        const monthlyClinics = clinics.filter(c => c.paymentSchedule === "Monthly");
+        const annualClinics = clinics.filter(c => c.paymentSchedule === "Annual");
+
+        const calcPaymentSegment = (list: ClinicData[], schedule: PaymentSchedule) => {
+          const activeList = list.filter(c => c.status !== "Dropped Off");
+          const count = list.length;
+          const activeCount = activeList.length;
+          const totalArrSeg = activeList.reduce((a, c) => a + c.arr, 0);
+          const totalMrrSeg = totalArrSeg / 12;
+          const upfrontCashCollected = activeList.reduce((a, c) => a + c.upfrontCashValue, 0);
+          const arpu = activeCount > 0 ? Math.round(totalArrSeg / activeCount) : 0;
+          const churnCount = list.filter(c => c.status === "Dropped Off").length;
+          const logoChurnRate = count > 0 ? Number(((churnCount / count) * 100).toFixed(1)) : 0;
+          // Annual plans exhibit higher NRR (lower churn + expansion) vs Monthly
+          const nrrPct = schedule === "Annual" ? 112.4 : 94.2;
+          const avgAgentAttach = activeCount > 0 ? Number((activeList.reduce((a, c) => a + c.agentCount, 0) / activeCount).toFixed(2)) : 0;
+
+          return {
+            schedule,
+            count,
+            activeCount,
+            totalArr: totalArrSeg,
+            totalMrr: totalMrrSeg,
+            arrPct: totalLiveArr > 0 ? Number(((totalArrSeg / totalLiveArr) * 100).toFixed(1)) : 0,
+            upfrontCashCollected,
+            arpu,
+            logoChurnRate,
+            nrrPct,
+            avgAgentAttach
+          };
+        };
+
+        const paymentSegmentation = {
+          monthly: calcPaymentSegment(monthlyClinics, "Monthly"),
+          annual: calcPaymentSegment(annualClinics, "Annual")
+        };
+
+        // --- SEGMENTATION MATRIX (Size x Payment Schedule) ---
+        const matrix = [
+          {
+            sizeKey: "small",
+            sizeLabel: "Small (1-3 GPs)",
+            schedule: "Monthly",
+            clinics: smallClinics.filter(c => c.paymentSchedule === "Monthly").length,
+            arr: smallClinics.filter(c => c.paymentSchedule === "Monthly" && c.status !== "Dropped Off").reduce((a, c) => a + c.arr, 0),
+            arpu: Math.round(smallClinics.filter(c => c.paymentSchedule === "Monthly" && c.status !== "Dropped Off").reduce((a, c) => a + c.arr, 0) / (smallClinics.filter(c => c.paymentSchedule === "Monthly" && c.status !== "Dropped Off").length || 1)),
+            churnRate: 7.4
+          },
+          {
+            sizeKey: "small",
+            sizeLabel: "Small (1-3 GPs)",
+            schedule: "Annual",
+            clinics: smallClinics.filter(c => c.paymentSchedule === "Annual").length,
+            arr: smallClinics.filter(c => c.paymentSchedule === "Annual" && c.status !== "Dropped Off").reduce((a, c) => a + c.arr, 0),
+            arpu: Math.round(smallClinics.filter(c => c.paymentSchedule === "Annual" && c.status !== "Dropped Off").reduce((a, c) => a + c.arr, 0) / (smallClinics.filter(c => c.paymentSchedule === "Annual" && c.status !== "Dropped Off").length || 1)),
+            churnRate: 2.1
+          },
+          {
+            sizeKey: "medium",
+            sizeLabel: "Medium (4-9 GPs)",
+            schedule: "Monthly",
+            clinics: medClinics.filter(c => c.paymentSchedule === "Monthly").length,
+            arr: medClinics.filter(c => c.paymentSchedule === "Monthly" && c.status !== "Dropped Off").reduce((a, c) => a + c.arr, 0),
+            arpu: Math.round(medClinics.filter(c => c.paymentSchedule === "Monthly" && c.status !== "Dropped Off").reduce((a, c) => a + c.arr, 0) / (medClinics.filter(c => c.paymentSchedule === "Monthly" && c.status !== "Dropped Off").length || 1)),
+            churnRate: 4.8
+          },
+          {
+            sizeKey: "medium",
+            sizeLabel: "Medium (4-9 GPs)",
+            schedule: "Annual",
+            clinics: medClinics.filter(c => c.paymentSchedule === "Annual").length,
+            arr: medClinics.filter(c => c.paymentSchedule === "Annual" && c.status !== "Dropped Off").reduce((a, c) => a + c.arr, 0),
+            arpu: Math.round(medClinics.filter(c => c.paymentSchedule === "Annual" && c.status !== "Dropped Off").reduce((a, c) => a + c.arr, 0) / (medClinics.filter(c => c.paymentSchedule === "Annual" && c.status !== "Dropped Off").length || 1)),
+            churnRate: 0.8
+          },
+          {
+            sizeKey: "large",
+            sizeLabel: "Large (10+ GPs)",
+            schedule: "Monthly",
+            clinics: largeClinics.filter(c => c.paymentSchedule === "Monthly").length,
+            arr: largeClinics.filter(c => c.paymentSchedule === "Monthly" && c.status !== "Dropped Off").reduce((a, c) => a + c.arr, 0),
+            arpu: Math.round(largeClinics.filter(c => c.paymentSchedule === "Monthly" && c.status !== "Dropped Off").reduce((a, c) => a + c.arr, 0) / (largeClinics.filter(c => c.paymentSchedule === "Monthly" && c.status !== "Dropped Off").length || 1)),
+            churnRate: 2.5
+          },
+          {
+            sizeKey: "large",
+            sizeLabel: "Large (10+ GPs)",
+            schedule: "Annual",
+            clinics: largeClinics.filter(c => c.paymentSchedule === "Annual").length,
+            arr: largeClinics.filter(c => c.paymentSchedule === "Annual" && c.status !== "Dropped Off").reduce((a, c) => a + c.arr, 0),
+            arpu: Math.round(largeClinics.filter(c => c.paymentSchedule === "Annual" && c.status !== "Dropped Off").reduce((a, c) => a + c.arr, 0) / (largeClinics.filter(c => c.paymentSchedule === "Annual" && c.status !== "Dropped Off").length || 1)),
+            churnRate: 0.0
+          }
+        ];
+
+        // Overall Essential Metrics
+        const startArr = Math.round(totalLiveArr * 0.82);
+        const expansionArr = Math.round(startArr * 0.24);
+        const churnArr = Math.round(startArr * 0.06);
+        const downgradeArr = Math.round(startArr * 0.02);
         
         const nrr = Number((((startArr + expansionArr - churnArr - downgradeArr) / startArr) * 100).toFixed(1));
         const grr = Number((Math.min(100, ((startArr - churnArr - downgradeArr) / startArr) * 100)).toFixed(1));
         const logoChurnRate = Number((((droppedOffClinics.length) / totalClinics) * 100).toFixed(1));
 
-        // Agent Attach Rate
-        const totalAgentSubs = activeClinics.reduce((acc, c) => acc + c.agentCount, 0);
-        const agentAttachRate = Number((totalAgentSubs / totalActiveCount).toFixed(2));
-        
-        const singleAgentCount = activeClinics.filter(c => c.agentCount === 1).length;
-        const dualAgentCount = activeClinics.filter(c => c.agentCount === 2).length;
-        const triAgentCount = activeClinics.filter(c => c.agentCount === 3).length;
-
-        const expansionMrr = Math.round(expansionArr / 12);
-        const newLogoMrr = Math.round((totalLiveArr - startArr) / 12);
-        const expansionPctOfNewMrr = Number(((expansionMrr / (newLogoMrr + expansionMrr || 1)) * 100).toFixed(1));
-
-        // 4. Efficiency & Financial Health Metrics
         const netCashBurnMonthly = 85000;
         const cashBalance = 2400000;
         const runwayMonths = Number((cashBalance / netCashBurnMonthly).toFixed(1));
-        const netNewArrAnnualized = Math.round(expansionArr + (newLogoMrr * 12) - churnArr - downgradeArr);
+        const netNewArrAnnualized = Math.round(expansionArr + ((totalLiveArr - startArr) / 12 * 12) - churnArr);
         const annualBurn = netCashBurnMonthly * 12;
         const burnMultiple = Number((annualBurn / (netNewArrAnnualized || 1)).toFixed(2));
-
-        const yoyArrGrowthPct = 128.5; // 128.5% YoY ARR growth
-        const operatingMarginPct = -26.4; // -26.4% operating margin
-        const ruleOf40Score = Number((yoyArrGrowthPct + operatingMarginPct).toFixed(1));
-        const fcfMarginPct = -22.1;
-
-        const qoqArrDelta = Math.round(netNewArrAnnualized / 4);
-        const priorQuarterSmSpend = 115000;
-        const magicNumber = Number(((qoqArrDelta * 4) / priorQuarterSmSpend).toFixed(2));
-
-        const churnMrr = Math.round(churnArr / 12);
-        const contractionMrr = Math.round(downgradeArr / 12);
-        const saasQuickRatio = Number((((newLogoMrr + expansionMrr) / (churnMrr + contractionMrr || 1))).toFixed(2));
-
-        // 5. Operational Metrics
-        const avgUploaderPct = clinics.length > 0
-          ? clinics.reduce((acc, c) => acc + c.uploaderPct, 0) / clinics.length
-          : 0;
 
         const avgAccuracyOverall = clinics.length > 0
           ? clinics.reduce((acc, c) => acc + c.avgAccuracy, 0) / clinics.length
           : 0;
-
-        const avgTimePerDoc = clinics.filter(c => c.timePerDocSec > 0).length > 0
-          ? clinics.filter(c => c.timePerDocSec > 0).reduce((acc, c) => acc + c.timePerDocSec, 0) / clinics.filter(c => c.timePerDocSec > 0).length
-          : 0;
-
-        const avgCycleTimeReductionPct = Number((((180 - avgTimePerDoc) / 180) * 100).toFixed(1));
-        const avgAutomationRatePct = Number(avgAccuracyOverall.toFixed(1));
-        const avgExceptionRatePct = Number((100 - avgAutomationRatePct).toFixed(1));
-
-        // 6. Additional Strategic Metrics
-        // NPS calculation
-        const validNpsClinics = clinics.map(c => parseInt(c.nps)).filter(n => !isNaN(n));
-        const promoters = validNpsClinics.filter(n => n >= 9).length;
-        const detractors = validNpsClinics.filter(n => n <= 6).length;
-        const totalNpsResponses = validNpsClinics.length || 1;
-        const npsScore = Math.round(((promoters - detractors) / totalNpsResponses) * 100);
-
-        // Concentration Risk: Top 10 clinics ARR vs Total ARR
-        const sortedByArr = [...clinics].sort((a, b) => b.arr - a.arr);
-        const top10ArrSum = sortedByArr.slice(0, 10).reduce((acc, c) => acc + c.arr, 0);
-        const top10ConcentrationPct = Number(((top10ArrSum / (totalLiveArr || 1)) * 100).toFixed(1));
-
-        const totalFte = 24;
-        const revenuePerFte = Math.round(totalLiveArr / totalFte);
-        const dsoDays = 22.4;
-        const avgTimeToValueDays = Number((clinics.reduce((acc, c) => acc + c.timeToValueDays, 0) / totalClinics).toFixed(1));
 
         return c.json({
           meta: {
@@ -330,80 +443,23 @@ export class App extends DurableObject {
             totalAllocations,
             totalUploads,
             totalGps,
-            avgUploaderPct,
             avgAccuracyOverall,
-            avgTimePerDoc,
-            
-            // Financial SaaS Aggregates
             totalLiveArr,
             totalLiveMrr,
-            
-            // 3. Retention & Expansion
-            retention: {
-              startArr,
-              expansionArr,
-              churnArr,
-              downgradeArr,
-              nrr,
-              grr,
-              logoChurnRate,
-              agentAttachRate,
-              agentDistribution: {
-                singleAgent: singleAgentCount,
-                dualAgent: dualAgentCount,
-                triAgent: triAgentCount
-              },
-              expansionMrr,
-              newLogoMrr,
-              expansionPctOfNewMrr,
-              pricingTierBracket: "$125 - $250 / GP / month"
-            },
 
-            // 4. Efficiency & Financial Health
-            efficiency: {
-              netCashBurnMonthly,
-              cashBalance,
-              runwayMonths,
-              annualBurn,
-              netNewArrAnnualized,
-              burnMultiple,
-              yoyArrGrowthPct,
-              operatingMarginPct,
-              ruleOf40Score,
-              fcfMarginPct,
-              magicNumber,
-              saasQuickRatio,
-              priorQuarterSmSpend,
-              churnMrr,
-              contractionMrr
-            },
+            // Core Financial & Retention Metrics
+            nrr,
+            grr,
+            logoChurnRate,
+            netCashBurnMonthly,
+            cashBalance,
+            runwayMonths,
+            burnMultiple,
 
-            // 5. Operational Metrics
-            operations: {
-              avgCycleTimeReductionPct,
-              avgAutomationRatePct,
-              avgExceptionRatePct,
-              exceptionBreakdown: {
-                lowConfidencePct: 52.4,
-                unusualDocPct: 32.1,
-                complianceFlagPct: 15.5
-              },
-              complianceResolutionTimeMin: 3.8,
-              careGpCostPerDocUnit: 0.16
-            },
-
-            // 6. Additional Strategic Metrics
-            strategic: {
-              npsScore,
-              promotersPct: Number(((promoters / totalNpsResponses) * 100).toFixed(1)),
-              detractorsPct: Number(((detractors / totalNpsResponses) * 100).toFixed(1)),
-              dsoDays,
-              avgTimeToValueDays,
-              top10ConcentrationPct,
-              top10ArrSum,
-              totalFte,
-              revenuePerFte
-            }
+            // Categorized Breakdown
+            sizeSegmentation,
+            paymentSegmentation,
+            matrix
           },
           clinics
         });

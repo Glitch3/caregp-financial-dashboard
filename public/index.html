@@ -14,17 +14,17 @@
         extend: {
           colors: {
             carenavy: {
-              50: '#eef6ff',
-              100: '#d9eaff',
-              200: '#bcdaff',
-              300: '#8ec1ff',
-              400: '#589dff',
-              500: '#0066ff', // CareGP Electric Blue
+              50: '#f0f6ff',
+              100: '#e0edff',
+              200: '#c0daff',
+              300: '#8ebcff',
+              400: '#5293ff',
+              500: '#0066ff', // Core CareGP Blue
               600: '#0052db',
-              700: '#0040b3',
+              700: '#003eb8',
               800: '#001a35', // CareGP Deep Navy
-              900: '#00142b',
-              950: '#000c1c',
+              900: '#060c18', // Canvas Dark
+              950: '#03060d',
             },
             caremint: {
               50: '#e6fff7',
@@ -37,10 +37,10 @@
             },
             caredark: {
               canvas: '#060c18',
-              surface: '#0f1c33',
-              elevated: '#172745',
+              surface: '#0d182b',
+              elevated: '#14233c',
               border: '#1a2e4f',
-              borderStrong: '#253f6b'
+              borderStrong: '#26426e'
             }
           },
           fontFamily: {
@@ -70,7 +70,6 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
   <style>
-    /* Tabular numbers and custom scrollbars */
     .numeric, table, [data-numeric="true"] {
       font-variant-numeric: tabular-nums;
     }
@@ -82,7 +81,7 @@
       background: rgba(6, 12, 24, 0.8);
     }
     ::-webkit-scrollbar-thumb {
-      background: rgba(37, 63, 107, 0.8);
+      background: rgba(38, 66, 110, 0.8);
       border-radius: 3px;
     }
     ::-webkit-scrollbar-thumb:hover {
@@ -90,7 +89,7 @@
     }
   </style>
 </head>
-<body class="bg-[#060c18] dark:bg-[#060c18] text-slate-100 min-h-screen font-sans antialiased selection:bg-[#0066ff] selection:text-white transition-colors duration-200">
+<body class="bg-[#060c18] text-slate-100 min-h-screen font-sans antialiased selection:bg-[#0066ff] selection:text-white transition-colors duration-200">
   <div id="root"></div>
 
   <script type="text/babel" data-type="module" data-presets="react">
@@ -98,16 +97,15 @@
     import { createRoot } from 'react-dom/client';
     import { 
       TrendingUp, DollarSign, Clock, Building2, FileText, CheckCircle2, 
-      AlertCircle, Search, RefreshCw, Download, ArrowUpRight, ArrowDownRight,
+      AlertCircle, Search, RefreshCw, ArrowUpRight, ArrowDownRight,
       ChevronDown, ChevronUp, Filter, Users, Cpu, ShieldCheck, Zap, Activity, Info, 
-      Calculator, ArrowRight, X, ExternalLink, Calendar, HelpCircle, Flame,
+      Calculator, ArrowRight, X, ExternalLink, Calendar, HelpCircle,
       PieChart as PieIcon, Layers, Target, Scale, Award, Percent, BarChart3,
-      Mic, Receipt, Sparkles, UserCheck, Heart, AlertTriangle, Moon, Sun, Shield
+      Mic, Receipt, Sparkles, AlertTriangle, Moon, Sun, Shield, Check, Crosshair
     } from 'lucide-react';
     import { 
       ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, 
-      CartesianGrid, ScatterChart, Scatter, Cell, PieChart, Pie, Legend,
-      AreaChart, Area, LineChart, Line
+      Cell, PieChart, Pie, Legend
     } from 'recharts';
 
     function App() {
@@ -115,24 +113,26 @@
       const [loading, setLoading] = useState(true);
       const [refreshing, setRefreshing] = useState(false);
       const [error, setError] = useState(null);
+
+      // Filters for Directory
       const [searchQuery, setSearchQuery] = useState('');
       const [statusFilter, setStatusFilter] = useState('All');
-      const [gpSizeFilter, setGpSizeFilter] = useState('All');
-      const [activeTab, setActiveTab] = useState('overview'); // overview, retention, health, operations, strategic, calculator, clinics
-      const [selectedClinic, setSelectedClinic] = useState(null);
-      const [sortField, setSortField] = useState('financialSavings');
-      const [sortDirection, setSortDir] = useState('desc');
-      const [page, setPage] = useState(1);
-      const [isDarkMode, setIsDarkMode] = useState(true);
-      const pageSize = 20;
+      const [sizeFilter, setSizeFilter] = useState('All');
+      const [paymentFilter, setPaymentFilter] = useState('All');
 
-      // Dynamic Modeler & Simulator States
-      const [simGps, setSimGps] = useState(15);
-      const [simDocsPerGp, setSimDocsPerGp] = useState(25);
-      const [simGpRate, setSimGpRate] = useState(150); // $150/hr
-      const [simTimeSavedSec, setSimTimeSavedSec] = useState(20);
-      const [simMonthlyBurn, setSimMonthlyBurn] = useState(85000);
-      const [simCashBalance, setSimCashBalance] = useState(2400000);
+      // Tabs: 'summary', 'segmentation', 'saas', 'directory', 'calculator'
+      const [activeTab, setActiveTab] = useState('summary');
+      const [selectedClinic, setSelectedClinic] = useState(null);
+
+      // Sorting
+      const [sortField, setSortField] = useState('arr');
+      const [sortDirection, setSortDir] = useState('desc');
+      const [isDarkMode, setIsDarkMode] = useState(true);
+
+      // Simple Calculator state
+      const [calcGps, setCalcGps] = useState(6);
+      const [calcSchedule, setCalcSchedule] = useState('Annual');
+      const [calcAgents, setCalcAgents] = useState(2); // 1, 2, or 3
 
       // Theme toggle
       const toggleTheme = () => {
@@ -144,21 +144,6 @@
           document.documentElement.classList.remove('dark');
         }
       };
-
-      // Keyboard shortcuts
-      useEffect(() => {
-        const handleKeyDown = (e) => {
-          if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
-            e.preventDefault();
-            document.getElementById('clinic-search-input')?.focus();
-          }
-          if (e.key === 'Escape') {
-            setSelectedClinic(null);
-          }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-      }, []);
 
       const fetchData = async (force = false) => {
         if (force) setRefreshing(true);
@@ -173,7 +158,7 @@
           setData(json);
         } catch (err) {
           console.error(err);
-          setError(err.message || 'Failed to load dashboard data');
+          setError(err.message || 'Failed to fetch dashboard data');
         } finally {
           setLoading(false);
           setRefreshing(false);
@@ -190,1225 +175,663 @@
         return data.clinics.filter(c => {
           const matchesSearch = searchQuery === '' || 
             c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            c.comments.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            c.status.toLowerCase().includes(searchQuery.toLowerCase());
+            c.comments.toLowerCase().includes(searchQuery.toLowerCase());
 
           const matchesStatus = statusFilter === 'All' || c.status === statusFilter;
-          
-          let matchesSize = true;
-          if (gpSizeFilter === 'small') matchesSize = c.numGps >= 1 && c.numGps <= 5;
-          else if (gpSizeFilter === 'medium') matchesSize = c.numGps > 5 && c.numGps <= 15;
-          else if (gpSizeFilter === 'large') matchesSize = c.numGps > 15;
+          const matchesSize = sizeFilter === 'All' || c.clinicSizeKey === sizeFilter;
+          const matchesPayment = paymentFilter === 'All' || c.paymentSchedule === paymentFilter;
 
-          return matchesSearch && matchesStatus && matchesSize;
-        });
-      }, [data, searchQuery, statusFilter, gpSizeFilter]);
-
-      // Sorted clinics
-      const sortedClinics = useMemo(() => {
-        return [...filteredClinics].sort((a, b) => {
-          let valA = a[sortField];
-          let valB = b[sortField];
-          if (typeof valA === 'string') {
-            valA = valA.toLowerCase();
-            valB = (valB || '').toLowerCase();
+          return matchesSearch && matchesStatus && matchesSize && matchesPayment;
+        }).sort((a, b) => {
+          let aVal = a[sortField];
+          let bVal = b[sortField];
+          if (typeof aVal === 'string') {
+            return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
           }
-          if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
-          if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
-          return 0;
+          return sortDirection === 'asc' ? (aVal - bVal) : (bVal - aVal);
         });
-      }, [filteredClinics, sortField, sortDirection]);
-
-      // Paginated clinics
-      const paginatedClinics = useMemo(() => {
-        const start = (page - 1) * pageSize;
-        return sortedClinics.slice(start, start + pageSize);
-      }, [sortedClinics, page]);
-
-      const totalPages = Math.ceil(sortedClinics.length / pageSize) || 1;
-
-      const handleSort = (field) => {
-        if (sortField === field) {
-          setSortDir(sortDirection === 'asc' ? 'desc' : 'asc');
-        } else {
-          setSortField(field);
-          setSortDir('desc');
-        }
-      };
-
-      // Export CSV
-      const exportCSV = () => {
-        if (!filteredClinics.length) return;
-        const headers = [
-          "Clinic Name", "Status", "GPs", "Allocations", "Uploads", 
-          "Uploader %", "Avg Accuracy %", "Agents Active", "Monthly Sub ($)", "Hours Saved", "Financial Savings ($)"
-        ];
-        const rows = filteredClinics.map(c => [
-          `"${c.name.replace(/"/g, '""')}"`,
-          c.status,
-          c.numGps,
-          c.allocations,
-          c.uploads,
-          `${c.uploaderPct.toFixed(1)}%`,
-          `${c.avgAccuracy.toFixed(1)}%`,
-          c.agentCount,
-          c.monthlySubscription,
-          c.totalHoursSaved.toFixed(1),
-          c.financialSavings.toFixed(2)
-        ]);
-
-        const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `CareGP_Financial_Export_${new Date().toISOString().slice(0,10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      };
-
-      // Scenario Simulator Results
-      const simResults = useMemo(() => {
-        const dailySecSaved = simGps * simDocsPerGp * simTimeSavedSec;
-        const dailyHours = dailySecSaved / 3600;
-        const monthlyHours = dailyHours * 22;
-        const annualHours = monthlyHours * 12;
-
-        const monthlyGrossSavings = monthlyHours * simGpRate;
-        const annualGrossSavings = annualHours * simGpRate;
-
-        const estSubMonthly = simGps * 180; // $180/GP/mo multi-agent price
-        const estSubAnnual = estSubMonthly * 12;
-
-        const netAnnualSavings = annualGrossSavings - estSubAnnual;
-        const roiMult = estSubAnnual > 0 ? annualGrossSavings / estSubAnnual : 0;
-        const runway = simMonthlyBurn > 0 ? (simCashBalance / simMonthlyBurn).toFixed(1) : 0;
-
-        return {
-          dailyHours: dailyHours.toFixed(1),
-          monthlyHours: monthlyHours.toFixed(0),
-          annualHours: annualHours.toFixed(0),
-          monthlyGrossSavings: monthlyGrossSavings.toFixed(0),
-          annualGrossSavings: annualGrossSavings.toFixed(0),
-          estSubAnnual: estSubAnnual.toFixed(0),
-          netAnnualSavings: netAnnualSavings.toFixed(0),
-          roiMult: roiMult.toFixed(1),
-          runway
-        };
-      }, [simGps, simDocsPerGp, simGpRate, simTimeSavedSec, simMonthlyBurn, simCashBalance]);
+      }, [data, searchQuery, statusFilter, sizeFilter, paymentFilter, sortField, sortDirection]);
 
       if (loading) {
         return (
-          <div class="flex flex-col items-center justify-center min-h-screen bg-[#060c18] text-slate-300 space-y-4">
-            <div class="relative w-16 h-16">
-              <div class="absolute inset-0 rounded-full border-4 border-[#0a192f]"></div>
-              <div class="absolute inset-0 rounded-full border-4 border-[#0066ff] border-t-transparent animate-spin"></div>
+          <div class="min-h-screen bg-[#060c18] flex flex-col items-center justify-center p-6 text-slate-100">
+            <div class="relative flex items-center justify-center mb-6">
+              <div class="w-16 h-16 rounded-full border-4 border-[#0066ff]/20 border-t-[#0066ff] animate-spin"></div>
+              <Activity class="w-6 h-6 text-[#00d2a0] absolute" />
             </div>
-            <div class="text-center space-y-1">
-              <h2 class="text-lg font-bold text-white tracking-wide">CareGP</h2>
-              <p class="text-xs text-[#00d2a0] font-medium animate-pulse">Syncing Financial Metrics & Medical Practice Intelligence...</p>
-            </div>
+            <h1 class="text-xl font-bold tracking-tight text-white mb-2">CareGP Financial Dashboard</h1>
+            <p class="text-sm text-slate-400">Loading clinic metrics & financial intelligence...</p>
           </div>
         );
       }
 
       if (error) {
         return (
-          <div class="flex flex-col items-center justify-center min-h-screen bg-[#060c18] p-6">
-            <div class="bg-[#0f1c33] border border-red-500/30 rounded-2xl p-6 max-w-md w-full text-center space-y-4 shadow-2xl">
-              <div class="w-12 h-12 bg-red-500/10 text-red-400 rounded-full flex items-center justify-center mx-auto">
-                <AlertCircle size={24} />
-              </div>
-              <h2 class="text-lg font-bold text-white">Data Sync Failed</h2>
-              <p class="text-sm text-slate-400">{error}</p>
+          <div class="min-h-screen bg-[#060c18] flex items-center justify-center p-6">
+            <div class="max-w-md w-full bg-[#0d182b] border border-red-500/30 rounded-xl p-6 text-center">
+              <AlertCircle class="w-12 h-12 text-red-400 mx-auto mb-4" />
+              <h2 class="text-lg font-bold text-white mb-2">Dashboard Offline</h2>
+              <p class="text-sm text-slate-300 mb-6">{error}</p>
               <button 
-                onClick={() => fetchData(true)}
-                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0066ff] hover:bg-[#0052db] text-white font-medium text-sm transition-colors"
+                onClick={() => fetchData(true)} 
+                class="px-5 py-2.5 bg-[#0066ff] hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-colors inline-flex items-center gap-2"
               >
-                <RefreshCw size={16} /> Retry Sync
+                <RefreshCw class="w-4 h-4" />
+                Retry Connection
               </button>
             </div>
           </div>
         );
       }
 
-      const summary = data.summary;
-      const meta = data.meta;
-      const ret = summary.retention;
-      const eff = summary.efficiency;
-      const ops = summary.operations;
-      const strat = summary.strategic;
+      const { summary, clinics } = data;
+      const { sizeSegmentation, paymentSegmentation, matrix } = summary;
 
-      // Status pill badge helper matching CareGP brand
-      const getStatusBadge = (status) => {
-        switch(status) {
-          case 'Closed':
-            return <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#00d2a0]/15 text-[#00d2a0] border border-[#00d2a0]/30"><span class="w-1.5 h-1.5 rounded-full bg-[#00d2a0]"></span>Closed</span>;
-          case 'Pilot':
-            return <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#0066ff]/15 text-[#388eff] border border-[#0066ff]/30"><span class="w-1.5 h-1.5 rounded-full bg-[#0066ff]"></span>Pilot</span>;
-          case 'Warm Pilot':
-            return <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>Warm Pilot</span>;
-          case 'Dropped Off':
-            return <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30"><span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>Dropped Off</span>;
-          default:
-            return <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">{status}</span>;
-        }
+      // Formatting Helpers
+      const fmtCurrency = (val) => new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', maximumFractionDigits: 0 }).format(val || 0);
+      const fmtNum = (val) => new Intl.NumberFormat('en-AU').format(val || 0);
+
+      // Recharts Color Theme
+      const COLORS = {
+        blue: '#0066ff',
+        mint: '#00d2a0',
+        purple: '#a855f7',
+        amber: '#f59e0b',
+        navy: '#1a2e4f'
       };
 
-      // Agent distribution pie chart
-      const agentDistChartData = [
-        { name: '1 Agent (Documents)', value: ret.agentDistribution.singleAgent, color: '#0066ff' },
-        { name: '2 Agents (Docs + Voice)', value: ret.agentDistribution.dualAgent, color: '#00d2a0' },
-        { name: '3 Agents (Docs + Voice + Billing)', value: ret.agentDistribution.triAgent, color: '#8b5cf6' },
+      // Chart Data preparation
+      const chartSizeData = [
+        { name: 'Small (1-3 GPs)', arr: sizeSegmentation.small.totalArr, clinics: sizeSegmentation.small.count, arpu: sizeSegmentation.small.arpu },
+        { name: 'Medium (4-9 GPs)', arr: sizeSegmentation.medium.totalArr, clinics: sizeSegmentation.medium.count, arpu: sizeSegmentation.medium.arpu },
+        { name: 'Large (10+ GPs)', arr: sizeSegmentation.large.totalArr, clinics: sizeSegmentation.large.count, arpu: sizeSegmentation.large.arpu },
       ];
 
-      // Top 10 ROI chart
-      const topSavingsChartData = [...data.clinics]
-        .sort((a,b) => b.financialSavings - a.financialSavings)
-        .slice(0, 10)
-        .map(c => ({
-          name: c.name.length > 18 ? c.name.slice(0, 16) + '...' : c.name,
-          fullName: c.name,
-          savings: Math.round(c.financialSavings),
-          hours: Math.round(c.totalHoursSaved)
-        }));
+      const chartPaymentData = [
+        { name: 'Monthly Billing', value: paymentSegmentation.monthly.totalArr, clinics: paymentSegmentation.monthly.count, churn: paymentSegmentation.monthly.logoChurnRate },
+        { name: 'Annual Billing', value: paymentSegmentation.annual.totalArr, clinics: paymentSegmentation.annual.count, churn: paymentSegmentation.annual.logoChurnRate },
+      ];
 
       return (
-        <div class="min-h-screen bg-slate-50 dark:bg-[#060c18] text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-200">
+        <div class="min-h-screen bg-[#060c18] dark:bg-[#060c18] text-slate-100 flex flex-col">
           
-          {/* TOP ANNOUNCEMENT / REGULATORY COMPLIANCE BAR */}
-          <div class="bg-gradient-to-r from-[#001a35] via-[#002b5c] to-[#001a35] text-white px-4 py-1.5 text-xs border-b border-[#003d80] flex flex-wrap items-center justify-between gap-2 shadow-sm">
-            <div class="flex items-center gap-2 font-medium">
-              <span class="inline-flex items-center gap-1 text-[#00d2a0] font-bold">
-                <Shield size={14} /> 🇦🇺 CareGP Australia
-              </span>
-              <span class="hidden sm:inline text-slate-300">|</span>
-              <span class="hidden sm:inline text-slate-300">Australian Health Data Sovereignty (Sydney DCs) • RACGP & AHPRA Compliant</span>
-            </div>
-            <div class="flex items-center gap-4 text-[11px] text-slate-300">
-              <span class="flex items-center gap-1">
-                <CheckCircle2 size={12} class="text-[#00d2a0]" /> Best Practice Ready
-              </span>
-              <span class="flex items-center gap-1">
-                <CheckCircle2 size={12} class="text-[#00d2a0]" /> MedicalDirector Ready
-              </span>
-              <a href="https://www.caregp.com.au" target="_blank" rel="noopener noreferrer" class="text-[#388eff] hover:underline flex items-center gap-0.5 font-medium">
-                caregp.com.au <ExternalLink size={10} />
-              </a>
-            </div>
-          </div>
-
-          {/* MAIN CAREGP NAVIGATION HEADER */}
-          <header class="sticky top-0 z-30 bg-[#001a35]/95 dark:bg-[#060c18]/95 backdrop-blur-md border-b border-[#003d80] dark:border-[#1a2e4f] px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4 text-white shadow-lg">
-            <div class="flex items-center gap-3">
-              <a href="https://www.caregp.com.au" target="_blank" class="flex items-center gap-2.5 group">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0066ff] via-[#00a3ff] to-[#00d2a0] flex items-center justify-center text-white font-bold shadow-lg shadow-[#0066ff]/20 group-hover:scale-105 transition-transform">
-                  <Activity size={22} className="text-white" />
+          {/* HEADER NAV */}
+          <header class="bg-[#0d182b] border-b border-[#1a2e4f] sticky top-0 z-40 backdrop-blur-md bg-opacity-95">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+              
+              {/* Brand & Identity */}
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0066ff] to-[#00d2a0] flex items-center justify-center shadow-lg shadow-[#0066ff]/20">
+                  <span class="text-white font-extrabold text-xl tracking-tight">GP</span>
                 </div>
                 <div>
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-xl font-black tracking-tight text-white font-sans">
-                      Care<span class="text-[#00a3ff]">GP</span>
-                    </span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#00d2a0]/20 text-[#00d2a0] border border-[#00d2a0]/40 uppercase tracking-wide">
-                      Financial Intelligence
+                  <div class="flex items-center gap-2">
+                    <span class="font-black text-xl tracking-tight text-white">Care<span class="text-[#0066ff]">GP</span></span>
+                    <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-[#0066ff]/15 text-[#0066ff] border border-[#0066ff]/30">
+                      Financial Executive
                     </span>
                   </div>
-                  <p class="text-[11px] text-slate-300 font-medium">Executive SaaS Metrics & Clinic Practice Analytics</p>
+                  <p class="text-xs text-slate-400 font-medium">AU Medical AI • Operating & Financial Intelligence</p>
                 </div>
-              </a>
+              </div>
+
+              {/* Compliance Badges & Controls */}
+              <div class="flex items-center gap-3">
+                <div class="hidden lg:flex items-center gap-2 bg-[#14233c] border border-[#1a2e4f] rounded-lg px-3 py-1.5 text-xs text-slate-300">
+                  <ShieldCheck class="w-4 h-4 text-[#00d2a0]" />
+                  <span>RACGP & AHPRA Compliant</span>
+                  <span class="text-slate-600">•</span>
+                  <span class="text-slate-400">Sydney Local DC</span>
+                </div>
+
+                <button 
+                  onClick={() => fetchData(true)}
+                  disabled={refreshing}
+                  class="p-2 bg-[#14233c] hover:bg-[#1a2e4f] border border-[#1a2e4f] rounded-lg text-slate-300 transition-colors"
+                  title="Refresh Sheet Data"
+                >
+                  <RefreshCw class={`w-4 h-4 ${refreshing ? 'animate-spin text-[#0066ff]' : ''}`} />
+                </button>
+
+                <button 
+                  onClick={toggleTheme}
+                  class="p-2 bg-[#14233c] hover:bg-[#1a2e4f] border border-[#1a2e4f] rounded-lg text-slate-300 transition-colors"
+                  title="Toggle Theme"
+                >
+                  {isDarkMode ? <Sun class="w-4 h-4 text-amber-400" /> : <Moon class="w-4 h-4 text-indigo-400" />}
+                </button>
+              </div>
+
             </div>
 
-            <div class="flex items-center gap-3 flex-wrap">
-              {/* Search Input */}
-              <div class="relative w-64 md:w-72">
-                <Search size={15} class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input 
-                  id="clinic-search-input"
-                  type="text"
-                  placeholder="Search clinic or notes... (/)"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  class="w-full h-8.5 pl-9 pr-8 rounded-lg bg-[#000c1c] dark:bg-[#0f1c33] border border-[#003d80] dark:border-[#1a2e4f] text-xs text-white placeholder:text-slate-400 focus:outline-none focus:border-[#0066ff] transition-all"
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
-                    <X size={13} />
-                  </button>
-                )}
-              </div>
-
-              {/* Sync Status Badge */}
-              <div class="flex items-center gap-2 bg-[#000c1c] dark:bg-[#0f1c33] px-3 py-1.5 rounded-lg border border-[#003d80] dark:border-[#1a2e4f] text-xs text-slate-300">
-                <span class={`w-2 h-2 rounded-full ${meta.isCached ? 'bg-amber-400' : 'bg-[#00d2a0]'} animate-pulse`}></span>
-                <span class="font-medium">{meta.isCached ? 'Cached' : 'Live Sheets'}</span>
-                <span class="text-slate-600">|</span>
-                <span class="text-[11px] text-slate-400">{meta.topLastUpdated}</span>
-              </div>
-
-              {/* Theme Toggle */}
-              <button 
-                onClick={toggleTheme}
-                title="Toggle Dark/Light Mode"
-                class="h-8.5 px-2.5 rounded-lg bg-[#002b5c] dark:bg-[#0f1c33] hover:bg-[#003d80] text-slate-200 text-xs font-medium border border-[#003d80] dark:border-[#1a2e4f] flex items-center gap-1.5 transition-all"
+            {/* TAB NAVIGATION */}
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto gap-2 border-t border-[#1a2e4f]/60 pt-2 pb-2">
+              <button
+                onClick={() => setActiveTab('summary')}
+                class={`px-4 py-2 rounded-lg font-semibold text-xs tracking-wide transition-all flex items-center gap-2 whitespace-nowrap ${
+                  activeTab === 'summary'
+                    ? 'bg-[#0066ff] text-white shadow-md shadow-[#0066ff]/30'
+                    : 'text-slate-400 hover:text-white hover:bg-[#14233c]'
+                }`}
               >
-                {isDarkMode ? <Sun size={14} class="text-amber-400" /> : <Moon size={14} class="text-[#00a3ff]" />}
+                <Zap class="w-3.5 h-3.5" />
+                1. Executive Summary
               </button>
 
-              <button 
-                onClick={() => fetchData(true)}
-                disabled={refreshing}
-                class="h-8.5 px-3 rounded-lg bg-[#002b5c] dark:bg-[#0f1c33] hover:bg-[#003d80] text-white text-xs font-medium border border-[#003d80] dark:border-[#1a2e4f] flex items-center gap-1.5 transition-all disabled:opacity-50"
+              <button
+                onClick={() => setActiveTab('segmentation')}
+                class={`px-4 py-2 rounded-lg font-semibold text-xs tracking-wide transition-all flex items-center gap-2 whitespace-nowrap ${
+                  activeTab === 'segmentation'
+                    ? 'bg-[#0066ff] text-white shadow-md shadow-[#0066ff]/30'
+                    : 'text-slate-400 hover:text-white hover:bg-[#14233c]'
+                }`}
               >
-                <RefreshCw size={13} class={refreshing ? 'animate-spin' : ''} />
-                <span>Refresh</span>
+                <Building2 class="w-3.5 h-3.5 text-[#00d2a0]" />
+                2. Size & Billing Breakdown
               </button>
 
-              <button 
-                onClick={exportCSV}
-                class="h-8.5 px-3.5 rounded-lg bg-[#0066ff] hover:bg-[#0052db] text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md shadow-[#0066ff]/20"
+              <button
+                onClick={() => setActiveTab('saas')}
+                class={`px-4 py-2 rounded-lg font-semibold text-xs tracking-wide transition-all flex items-center gap-2 whitespace-nowrap ${
+                  activeTab === 'saas'
+                    ? 'bg-[#0066ff] text-white shadow-md shadow-[#0066ff]/30'
+                    : 'text-slate-400 hover:text-white hover:bg-[#14233c]'
+                }`}
               >
-                <Download size={13} />
-                <span>Export CSV</span>
+                <BarChart3 class="w-3.5 h-3.5 text-purple-400" />
+                3. SaaS & Unit Economics
+              </button>
+
+              <button
+                onClick={() => setActiveTab('directory')}
+                class={`px-4 py-2 rounded-lg font-semibold text-xs tracking-wide transition-all flex items-center gap-2 whitespace-nowrap ${
+                  activeTab === 'directory'
+                    ? 'bg-[#0066ff] text-white shadow-md shadow-[#0066ff]/30'
+                    : 'text-slate-400 hover:text-white hover:bg-[#14233c]'
+                }`}
+              >
+                <Users class="w-3.5 h-3.5 text-blue-400" />
+                4. Clinic Directory ({filteredClinics.length})
+              </button>
+
+              <button
+                onClick={() => setActiveTab('calculator')}
+                class={`px-4 py-2 rounded-lg font-semibold text-xs tracking-wide transition-all flex items-center gap-2 whitespace-nowrap ${
+                  activeTab === 'calculator'
+                    ? 'bg-[#0066ff] text-white shadow-md shadow-[#0066ff]/30'
+                    : 'text-slate-400 hover:text-white hover:bg-[#14233c]'
+                }`}
+              >
+                <Calculator class="w-3.5 h-3.5 text-amber-400" />
+                5. ROI Calculator
               </button>
             </div>
           </header>
 
-          {/* MAIN CONTENT CONTAINER */}
-          <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
+          {/* MAIN CONTENT AREA */}
+          <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
 
-            {/* TOP METRIC HIGHLIGHT STRIP (CAREGP 5 CORE METRICS) */}
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-              
-              {/* 1. Live ARR / MRR */}
-              <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-4 shadow-sm relative overflow-hidden group hover:border-[#0066ff] transition-all">
-                <div class="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
-                  <span>Live ARR / MRR</span>
-                  <DollarSign size={16} class="text-[#0066ff]" />
-                </div>
-                <div class="text-2xl font-bold text-slate-900 dark:text-white numeric tracking-tight">
-                  ${Math.round(summary.totalLiveArr).toLocaleString()}
-                </div>
-                <div class="text-xs text-[#0066ff] font-semibold mt-1 flex items-center gap-1">
-                  <TrendingUp size={12} /> ${Math.round(summary.totalLiveMrr).toLocaleString()} / mo MRR
-                </div>
-              </div>
-
-              {/* 2. NRR % */}
-              <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-4 shadow-sm relative overflow-hidden group hover:border-[#00d2a0] transition-all">
-                <div class="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
-                  <span>Net Retention (NRR)</span>
-                  <TrendingUp size={16} class="text-[#00d2a0]" />
-                </div>
-                <div class="text-2xl font-bold text-slate-900 dark:text-white numeric tracking-tight">
-                  {ret.nrr}%
-                </div>
-                <div class="text-xs text-[#00d2a0] font-semibold mt-1">
-                  GRR: {ret.grr}% (&ge;85% Healthy)
-                </div>
-              </div>
-
-              {/* 3. Burn Multiple & Runway */}
-              <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-4 shadow-sm relative overflow-hidden group hover:border-amber-400 transition-all">
-                <div class="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
-                  <span>Burn Multiple</span>
-                  <Flame size={16} class="text-amber-500 dark:text-amber-400" />
-                </div>
-                <div class="text-2xl font-bold text-slate-900 dark:text-white numeric tracking-tight">
-                  {eff.burnMultiple}x
-                </div>
-                <div class="text-xs text-amber-600 dark:text-amber-400 font-semibold mt-1">
-                  {eff.runwayMonths} Months Runway
-                </div>
-              </div>
-
-              {/* 4. Rule of 40 Score */}
-              <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-4 shadow-sm relative overflow-hidden group hover:border-purple-500 transition-all">
-                <div class="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
-                  <span>Rule of 40</span>
-                  <Target size={16} class="text-purple-500 dark:text-purple-400" />
-                </div>
-                <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 numeric tracking-tight">
-                  +{eff.ruleOf40Score}
-                </div>
-                <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  {eff.yoyArrGrowthPct}% Growth - 26% Op Margin
-                </div>
-              </div>
-
-              {/* 5. Agent Attach Rate */}
-              <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-4 shadow-sm relative overflow-hidden group hover:border-[#00a3ff] transition-all">
-                <div class="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
-                  <span>Agent Attach</span>
-                  <Cpu size={16} class="text-[#00a3ff]" />
-                </div>
-                <div class="text-2xl font-bold text-[#00a3ff] numeric tracking-tight">
-                  {ret.agentAttachRate} / 3.0
-                </div>
-                <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  {ret.agentDistribution.triAgent} Clinics using 3 Agents
-                </div>
-              </div>
-
-            </div>
-
-            {/* TAB NAVIGATION STRIP WITH CAREGP STYLING */}
-            <div class="border-b border-slate-200 dark:border-[#1a2e4f] flex items-center justify-between overflow-x-auto gap-2">
-              <div class="flex items-center gap-1">
+            {/* TAB 1: EXECUTIVE SUMMARY */}
+            {activeTab === 'summary' && (
+              <div class="space-y-8">
                 
-                <button 
-                  onClick={() => setActiveTab('overview')}
-                  class={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
-                    activeTab === 'overview' 
-                      ? 'border-[#0066ff] text-[#0066ff] dark:text-[#388eff] bg-[#0066ff]/5 dark:bg-[#0066ff]/10' 
-                      : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <Activity size={15} /> Overview & Financial ROI
-                </button>
-
-                <button 
-                  onClick={() => setActiveTab('retention')}
-                  class={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
-                    activeTab === 'retention' 
-                      ? 'border-[#0066ff] text-[#0066ff] dark:text-[#388eff] bg-[#0066ff]/5 dark:bg-[#0066ff]/10' 
-                      : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <TrendingUp size={15} /> 3. Retention & Multi-Agent
-                </button>
-
-                <button 
-                  onClick={() => setActiveTab('health')}
-                  class={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
-                    activeTab === 'health' 
-                      ? 'border-[#0066ff] text-[#0066ff] dark:text-[#388eff] bg-[#0066ff]/5 dark:bg-[#0066ff]/10' 
-                      : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <Flame size={15} /> 4. Financial Health & Efficiency
-                </button>
-
-                <button 
-                  onClick={() => setActiveTab('operations')}
-                  class={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
-                    activeTab === 'operations' 
-                      ? 'border-[#0066ff] text-[#0066ff] dark:text-[#388eff] bg-[#0066ff]/5 dark:bg-[#0066ff]/10' 
-                      : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <Cpu size={15} /> 5. Operational Metrics
-                </button>
-
-                <button 
-                  onClick={() => setActiveTab('strategic')}
-                  class={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
-                    activeTab === 'strategic' 
-                      ? 'border-[#0066ff] text-[#0066ff] dark:text-[#388eff] bg-[#0066ff]/5 dark:bg-[#0066ff]/10' 
-                      : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <Award size={15} /> 6. Strategic & Risk
-                </button>
-
-                <button 
-                  onClick={() => setActiveTab('calculator')}
-                  class={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
-                    activeTab === 'calculator' 
-                      ? 'border-[#0066ff] text-[#0066ff] dark:text-[#388eff] bg-[#0066ff]/5 dark:bg-[#0066ff]/10' 
-                      : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <Calculator size={15} /> CareGP ROI Modeler
-                </button>
-
-                <button 
-                  onClick={() => setActiveTab('clinics')}
-                  class={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
-                    activeTab === 'clinics' 
-                      ? 'border-[#0066ff] text-[#0066ff] dark:text-[#388eff] bg-[#0066ff]/5 dark:bg-[#0066ff]/10' 
-                      : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <Building2 size={15} /> Clinics Directory ({filteredClinics.length})
-                </button>
-
-              </div>
-
-              {/* Status & GP Filter */}
-              <div class="flex items-center gap-2 py-1">
-                <select 
-                  value={statusFilter} 
-                  onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-                  class="h-7.5 px-2.5 rounded-lg bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#0066ff]"
-                >
-                  <option value="All">All Statuses ({summary.totalClinics})</option>
-                  <option value="Closed">Closed ({summary.closedCount})</option>
-                  <option value="Pilot">Pilot ({summary.pilotCount})</option>
-                  <option value="Warm Pilot">Warm Pilot ({summary.warmPilotCount})</option>
-                  <option value="Dropped Off">Dropped Off ({summary.droppedOffCount})</option>
-                </select>
-
-                <select 
-                  value={gpSizeFilter} 
-                  onChange={(e) => { setGpSizeFilter(e.target.value); setPage(1); }}
-                  class="h-7.5 px-2.5 rounded-lg bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#0066ff]"
-                >
-                  <option value="All">All GP Sizes</option>
-                  <option value="small">Small (1-5 GPs)</option>
-                  <option value="medium">Medium (6-15 GPs)</option>
-                  <option value="large">Large (&gt;15 GPs)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* TAB 1: OVERVIEW & ANALYTICS */}
-            {activeTab === 'overview' && (
-              <div class="space-y-6">
-                
-                {/* 4 CORE HIGHLIGHT CARDS FROM GOOGLE SHEET */}
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm">
-                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-                      <span>Total Financial Savings</span>
-                      <DollarSign class="text-[#00d2a0]" size={18} />
-                    </div>
-                    <div class="text-2xl font-bold text-slate-900 dark:text-white numeric">
-                      ${Math.round(summary.totalFinancialSavings).toLocaleString()}
-                    </div>
-                    <div class="text-xs text-[#00d2a0] mt-2 flex items-center gap-1 font-semibold">
-                      <ArrowUpRight size={14} /> +${Math.round(summary.totalFinancialSavings / (summary.closedCount || 1)).toLocaleString()} per closed clinic
-                    </div>
-                  </div>
-
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm">
-                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-                      <span>Hours Reclaimed</span>
-                      <Clock class="text-[#0066ff]" size={18} />
-                    </div>
-                    <div class="text-2xl font-bold text-slate-900 dark:text-white numeric">
-                      {Math.round(summary.totalHoursSaved).toLocaleString()} <span class="text-sm font-normal text-slate-500 dark:text-slate-400">hrs</span>
-                    </div>
-                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                      across {summary.totalGps} General Practitioners
-                    </div>
-                  </div>
-
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm">
-                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-                      <span>Doc Allocations / Uploads</span>
-                      <FileText class="text-[#00a3ff]" size={18} />
-                    </div>
-                    <div class="text-2xl font-bold text-slate-900 dark:text-white numeric">
-                      {(summary.totalUploads/1000).toFixed(1)}k / {(summary.totalAllocations/1000).toFixed(1)}k
-                    </div>
-                    <div class="text-xs text-[#00a3ff] font-semibold mt-2">
-                      {summary.avgUploaderPct.toFixed(1)}% average uploader adoption
-                    </div>
-                  </div>
-
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm">
-                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-                      <span>Live Practices & AI Precision</span>
-                      <Building2 class="text-purple-500 dark:text-purple-400" size={18} />
-                    </div>
-                    <div class="text-2xl font-bold text-slate-900 dark:text-white numeric">
-                      {summary.closedCount} <span class="text-sm font-normal text-slate-500 dark:text-slate-400">/ {summary.totalClinics} clinics</span>
-                    </div>
-                    <div class="text-xs text-purple-600 dark:text-purple-400 font-semibold mt-2">
-                      {summary.avgAccuracyOverall.toFixed(1)}% L1-L4 extraction precision
-                    </div>
-                  </div>
-                </div>
-
-                {/* CAREGP 3 AGENT SUITE BANNER */}
-                <div class="bg-gradient-to-r from-[#001a35] via-[#0f1c33] to-[#001a35] border border-[#003d80] dark:border-[#1a2e4f] rounded-2xl p-6 text-white shadow-xl">
-                  <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
-                    <div>
-                      <span class="text-[11px] font-bold uppercase tracking-wider text-[#00d2a0] bg-[#00d2a0]/20 px-2.5 py-1 rounded border border-[#00d2a0]/30">
-                        Multi-Agent Strategy
-                      </span>
-                      <h3 class="text-xl font-bold text-white mt-2">The CareGP AI Medical Agent Ecosystem</h3>
-                      <p class="text-xs text-slate-300 max-w-2xl mt-1">
-                        Three specialized AI agents working inside Australian General Practice to eliminate admin drag, accelerate clinical notes, and optimize MBS billing item codes.
-                      </p>
-                    </div>
-                    <div class="text-right">
-                      <div class="text-2xl font-black text-[#00d2a0]">{ret.agentAttachRate}</div>
-                      <div class="text-xs text-slate-300">Avg Agent Attach Rate</div>
-                    </div>
-                  </div>
-
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                    
-                    <div class="bg-[#000c1c] p-4 rounded-xl border border-[#0066ff]/40 space-y-2">
-                      <div class="flex items-center justify-between">
-                        <span class="font-bold text-[#388eff] text-sm flex items-center gap-1.5">
-                          <FileText size={16} /> Documents Agent
-                        </span>
-                        <span class="text-[11px] font-bold text-white bg-[#0066ff]/30 px-2 py-0.5 rounded">100% Active</span>
-                      </div>
-                      <p class="text-slate-300 text-[11px]">
-                        Medical inbox, discharge summaries, specialist letters & consult note auto-extractions.
-                      </p>
-                      <div class="text-[11px] font-semibold text-[#00d2a0]">
-                        ⚡ {ops.avgAutomationRatePct}% Automation Rate
-                      </div>
-                    </div>
-
-                    <div class="bg-[#000c1c] p-4 rounded-xl border border-[#00d2a0]/40 space-y-2">
-                      <div class="flex items-center justify-between">
-                        <span class="font-bold text-[#00d2a0] text-sm flex items-center gap-1.5">
-                          <Mic size={16} /> Voice Agent
-                        </span>
-                        <span class="text-[11px] font-bold text-white bg-[#00d2a0]/30 px-2 py-0.5 rounded">62.5% Active</span>
-                      </div>
-                      <p class="text-slate-300 text-[11px]">
-                        Ambient GP consultation scribing, clinical dictation & phone triage workflow automation.
-                      </p>
-                      <div class="text-[11px] font-semibold text-[#00d2a0]">
-                        ⏱️ Saves 15-20s per consultation
-                      </div>
-                    </div>
-
-                    <div class="bg-[#000c1c] p-4 rounded-xl border border-purple-500/40 space-y-2">
-                      <div class="flex items-center justify-between">
-                        <span class="font-bold text-purple-400 text-sm flex items-center gap-1.5">
-                          <Receipt size={16} /> Billing Agent
-                        </span>
-                        <span class="text-[11px] font-bold text-white bg-purple-500/30 px-2 py-0.5 rounded">38.4% Active</span>
-                      </div>
-                      <p class="text-slate-300 text-[11px]">
-                        MBS item code optimizer, Medicare claim validation & patient co-payment collections.
-                      </p>
-                      <div class="text-[11px] font-semibold text-purple-300">
-                        💳 Accelerates DSO to 12.5 days
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-
-                {/* CHARTS ROW 1 */}
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Top 10 Clinics */}
-                  <div class="lg:col-span-2 bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm">
-                    <div class="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Top Medical Practices by Financial ROI ($)</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Value of GP admin hours saved in dollar terms</p>
-                      </div>
-                      <span class="text-xs font-bold px-2.5 py-1 bg-[#00d2a0]/15 text-[#00d2a0] rounded-full border border-[#00d2a0]/30">
-                        Top 10 Leaders
-                      </span>
-                    </div>
-
-                    <div class="h-64 w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={topSavingsChartData} margin={{ top: 10, right: 10, left: 10, bottom: 25 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#1a2e4f" : "#e2e8f0"} vertical={false} />
-                          <XAxis dataKey="name" stroke={isDarkMode ? "#94a3b8" : "#64748b"} fontSize={10} tickLine={false} angle={-25} textAnchor="end" />
-                          <YAxis stroke={isDarkMode ? "#94a3b8" : "#64748b"} fontSize={10} tickLine={false} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
-                          <Tooltip 
-                            contentStyle={{ backgroundColor: isDarkMode ? '#0f1c33' : '#ffffff', borderColor: isDarkMode ? '#1a2e4f' : '#e2e8f0', borderRadius: '8px', fontSize: '12px', color: isDarkMode ? '#ffffff' : '#0f172a' }}
-                            formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Savings ($)']}
-                            labelFormatter={(label, payload) => payload[0]?.payload?.fullName || label}
-                          />
-                          <Bar dataKey="savings" fill="#00d2a0" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-
-                  {/* 3-Agent Adoption Distribution */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm flex flex-col justify-between">
-                    <div>
-                      <h3 class="text-sm font-bold text-slate-900 dark:text-white">CareGP Multi-Agent Adoption</h3>
-                      <p class="text-xs text-slate-500 dark:text-slate-400">Documents, Voice & Billing agent distribution</p>
-                    </div>
-
-                    <div class="h-52 w-full my-2">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={agentDistChartData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={45}
-                            outerRadius={70}
-                            paddingAngle={4}
-                            dataKey="value"
-                          >
-                            {agentDistChartData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#0f1c33' : '#ffffff', borderColor: isDarkMode ? '#1a2e4f' : '#e2e8f0', borderRadius: '8px', fontSize: '12px' }} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-
-                    <div class="space-y-1.5 text-xs">
-                      <div class="flex items-center justify-between p-2 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                        <span class="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
-                          <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> 3-Agent Full Suite
-                        </span>
-                        <span class="font-bold text-purple-600 dark:text-purple-400">{ret.agentDistribution.triAgent} Clinics</span>
-                      </div>
-                      <div class="flex items-center justify-between p-2 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                        <span class="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
-                          <span class="w-2.5 h-2.5 rounded-full bg-[#00d2a0]"></span> 2-Agent Expanded
-                        </span>
-                        <span class="font-bold text-[#00d2a0]">{ret.agentDistribution.dualAgent} Clinics</span>
-                      </div>
-                      <div class="flex items-center justify-between p-2 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                        <span class="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
-                          <span class="w-2.5 h-2.5 rounded-full bg-[#0066ff]"></span> 1-Agent Core
-                        </span>
-                        <span class="font-bold text-[#0066ff]">{ret.agentDistribution.singleAgent} Clinics</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            )}
-
-            {/* TAB 2: RETENTION & EXPANSION (SECTION 3 METRICS) */}
-            {activeTab === 'retention' && (
-              <div class="space-y-6">
-                
-                {/* Overview Header */}
-                <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm flex items-start justify-between flex-wrap gap-4">
-                  <div>
-                    <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <TrendingUp size={18} class="text-[#00d2a0]" /> 3. Retention & Expansion Intelligence
-                    </h3>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
-                      Tracking cohort expansion, churn, agent cross-sell, and gross vs net revenue retention across CareGP's 3 AI agents (Documents, Voice, Billing).
-                    </p>
-                  </div>
-                  <div class="px-3 py-1.5 rounded-lg bg-[#0066ff]/15 border border-[#0066ff]/30 text-xs font-bold text-[#0066ff] dark:text-[#388eff]">
-                    Pricing Bracket: {ret.pricingTierBracket}
-                  </div>
-                </div>
-
-                {/* 3.1 & 3.2 NRR vs GRR Cards */}
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* 5 HERO METRIC CARDS */}
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   
-                  {/* 3.1 NRR Card */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
-                    <div class="flex items-center justify-between">
-                      <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">3.1 Net Revenue Retention (NRR)</span>
-                      <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#00d2a0]/15 text-[#00d2a0] border border-[#00d2a0]/30">
-                        {ret.nrr}% NRR
+                  {/* Card 1: Annual Recurring Revenue */}
+                  <div class="bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-5 relative overflow-hidden group hover:border-[#0066ff]/50 transition-colors">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-[#0066ff]"></div>
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Live ARR</span>
+                      <span class="p-1.5 rounded-lg bg-[#0066ff]/10 text-[#0066ff]">
+                        <DollarSign class="w-4 h-4" />
                       </span>
                     </div>
-
-                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
-                      {ret.nrr}%
-                    </div>
-
-                    <div class="space-y-2 text-xs border-t border-slate-200 dark:border-[#1a2e4f] pt-3">
-                      <div class="flex justify-between">
-                        <span class="text-slate-500 dark:text-slate-400">Start ARR (12 mo ago):</span>
-                        <span class="font-bold text-slate-800 dark:text-slate-200">${ret.startArr.toLocaleString()}</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span class="text-[#00d2a0] font-semibold">+ Expansion Revenue:</span>
-                        <span class="font-bold text-[#00d2a0]">+${ret.expansionArr.toLocaleString()}</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span class="text-rose-500 font-semibold">− Churn Revenue:</span>
-                        <span class="font-bold text-rose-500">−${ret.churnArr.toLocaleString()}</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span class="text-amber-500 font-semibold">− Downgrade Revenue:</span>
-                        <span class="font-bold text-amber-500">−${ret.downgradeArr.toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
-                      💡 <strong>Industry Benchmark:</strong> AI products under $50/mo average 32% NRR; at $250+/mo, enterprise SaaS averages ~85%–110%+. CareGP sits firmly in the high-retention enterprise bracket.
+                    <div class="text-2xl font-black text-white numeric mb-1">{fmtCurrency(summary.totalLiveArr)}</div>
+                    <div class="flex items-center gap-1.5 text-xs text-[#00d2a0] font-medium">
+                      <TrendingUp class="w-3.5 h-3.5" />
+                      <span>{fmtCurrency(summary.totalLiveMrr)} / mo</span>
                     </div>
                   </div>
 
-                  {/* 3.2 GRR Card */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
-                    <div class="flex items-center justify-between">
-                      <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">3.2 Gross Revenue Retention (GRR)</span>
-                      <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#0066ff]/15 text-[#0066ff] dark:text-[#388eff] border border-[#0066ff]/30">
-                        {ret.grr}% GRR
+                  {/* Card 2: Active Practices & GPs */}
+                  <div class="bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-5 relative overflow-hidden group hover:border-[#00d2a0]/50 transition-colors">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-[#00d2a0]"></div>
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Clinics</span>
+                      <span class="p-1.5 rounded-lg bg-[#00d2a0]/10 text-[#00d2a0]">
+                        <Building2 class="w-4 h-4" />
                       </span>
                     </div>
-
-                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
-                      {ret.grr}%
-                    </div>
-
-                    <div class="space-y-2 text-xs border-t border-slate-200 dark:border-[#1a2e4f] pt-3">
-                      <div class="flex justify-between">
-                        <span class="text-slate-500 dark:text-slate-400">Healthy Floor Threshold:</span>
-                        <span class="font-bold text-[#00d2a0]">&ge; 85.0%</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span class="text-slate-500 dark:text-slate-400">Gross Churn & Contraction:</span>
-                        <span class="font-bold text-rose-500">10.4%</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span class="text-slate-500 dark:text-slate-400">Cap Threshold:</span>
-                        <span class="font-bold text-slate-700 dark:text-slate-300">100% Max</span>
-                      </div>
-                    </div>
-
-                    <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
-                      🛡️ High GRR ensures upsells are genuine expansion rather than masking a leaky customer base.
+                    <div class="text-2xl font-black text-white numeric mb-1">{summary.totalClinics - summary.droppedOffCount} Clinics</div>
+                    <div class="text-xs text-slate-400 font-medium">
+                      <span class="text-white font-bold">{summary.totalGps}</span> active GP Seats
                     </div>
                   </div>
 
-                  {/* 3.3 Logo Churn Rate */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
-                    <div class="flex items-center justify-between">
-                      <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">3.3 Logo Churn Rate</span>
-                      <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/15 text-rose-500 border border-rose-500/30">
-                        {ret.logoChurnRate}% Churn
+                  {/* Card 3: Net Revenue Retention */}
+                  <div class="bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-5 relative overflow-hidden group hover:border-purple-500/50 transition-colors">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Net Retention (NRR)</span>
+                      <span class="p-1.5 rounded-lg bg-purple-500/10 text-purple-400">
+                        <Activity class="w-4 h-4" />
                       </span>
                     </div>
-
-                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
-                      {ret.logoChurnRate}%
+                    <div class="text-2xl font-black text-white numeric mb-1">{summary.nrr}%</div>
+                    <div class="text-xs text-slate-400 font-medium">
+                      GRR: <span class="text-white font-bold">{summary.grr}%</span>
                     </div>
+                  </div>
 
-                    <div class="space-y-2 text-xs border-t border-slate-200 dark:border-[#1a2e4f] pt-3">
-                      <div class="flex justify-between">
-                        <span class="text-slate-500 dark:text-slate-400">Dropped Off Clinics:</span>
-                        <span class="font-bold text-rose-500">{summary.droppedOffCount} clinics</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span class="text-slate-500 dark:text-slate-400">Active Base:</span>
-                        <span class="font-bold text-slate-800 dark:text-slate-200">{summary.totalClinics - summary.droppedOffCount} clinics</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span class="text-slate-500 dark:text-slate-400">Revenue Impact vs Logo Impact:</span>
-                        <span class="font-bold text-amber-500">2-GP vs 40-GP Delta</span>
-                      </div>
+                  {/* Card 4: Runway & Burn Multiple */}
+                  <div class="bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-5 relative overflow-hidden group hover:border-amber-500/50 transition-colors">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cash Runway</span>
+                      <span class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+                        <Clock class="w-4 h-4" />
+                      </span>
                     </div>
+                    <div class="text-2xl font-black text-white numeric mb-1">{summary.runwayMonths} Mo</div>
+                    <div class="text-xs text-slate-400 font-medium">
+                      Burn Mult: <span class="text-white font-bold">{summary.burnMultiple}x</span>
+                    </div>
+                  </div>
 
-                    <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
-                      ⚖️ Tracked separately from revenue churn: losing a 2-GP practice counts as 1 logo, but losing a 40-GP practice has 20x the ARR impact.
+                  {/* Card 5: Clinic Hours & Savings */}
+                  <div class="bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-5 relative overflow-hidden group hover:border-[#0066ff]/50 transition-colors">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-[#0066ff]"></div>
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Value Delivered</span>
+                      <span class="p-1.5 rounded-lg bg-[#0066ff]/10 text-[#0066ff]">
+                        <Award class="w-4 h-4" />
+                      </span>
+                    </div>
+                    <div class="text-2xl font-black text-white numeric mb-1">{fmtNum(summary.totalHoursSaved)} hrs</div>
+                    <div class="text-xs text-slate-400 font-medium">
+                      Saved clinics <span class="text-[#00d2a0] font-bold">{fmtCurrency(summary.totalFinancialSavings)}</span>
                     </div>
                   </div>
 
                 </div>
 
-                {/* 3.4 Agent Attach Rate & 3.5 Expansion MRR */}
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  
-                  {/* 3.4 Agent Attach Rate Detail */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <h4 class="text-sm font-bold text-slate-900 dark:text-white">3.4 Agent Attach Rate & Distribution</h4>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Average CareGP Agents adopted per active clinic</p>
-                      </div>
-                      <span class="px-3 py-1 rounded-full bg-[#00a3ff]/15 text-[#00a3ff] font-bold text-sm border border-[#00a3ff]/30">
-                        {ret.agentAttachRate} / 3.0
-                      </span>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-3 text-center text-xs">
-                      <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                        <div class="text-slate-500 dark:text-slate-400 mb-1">Documents Agent</div>
-                        <div class="text-base font-bold text-[#0066ff]">100% Adoption</div>
-                        <div class="text-[10px] text-slate-400 mt-1">Core Document AI</div>
-                      </div>
-                      <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                        <div class="text-slate-500 dark:text-slate-400 mb-1">Voice Agent</div>
-                        <div class="text-base font-bold text-[#00d2a0]">62.5% Adoption</div>
-                        <div class="text-[10px] text-slate-400 mt-1">Scribe & Consult</div>
-                      </div>
-                      <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                        <div class="text-slate-500 dark:text-slate-400 mb-1">Billing Agent</div>
-                        <div class="text-base font-bold text-purple-500 dark:text-purple-400">38.4% Adoption</div>
-                        <div class="text-[10px] text-slate-400 mt-1">Claims & Items</div>
-                      </div>
-                    </div>
-
-                    <div class="p-3 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-xs text-slate-700 dark:text-slate-300 space-y-1">
-                      <div class="font-bold text-slate-900 dark:text-white">Expansion Pipeline Strategy:</div>
-                      <p class="text-slate-500 dark:text-slate-400 text-[11px]">
-                        Multi-agent adoption is the #1 driver of net retention. Clinics using 2+ agents churn at less than 1.5% annually.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* 3.5 Expansion MRR Detail */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <h4 class="text-sm font-bold text-slate-900 dark:text-white">3.5 Expansion MRR & Growth Quality</h4>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Additional monthly revenue from existing customer accounts</p>
-                      </div>
-                      <span class="px-3 py-1 rounded-full bg-[#00d2a0]/15 text-[#00d2a0] font-bold text-sm border border-[#00d2a0]/30">
-                        ${ret.expansionMrr.toLocaleString()} / mo
-                      </span>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3 text-xs">
-                      <div class="bg-slate-50 dark:bg-[#060c18] p-4 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                        <div class="text-slate-500 dark:text-slate-400 font-medium">Expansion MRR ($)</div>
-                        <div class="text-2xl font-bold text-[#00d2a0] numeric mt-1">
-                          ${ret.expansionMrr.toLocaleString()}
-                        </div>
-                        <div class="text-[11px] text-slate-400 mt-1">+${(ret.expansionMrr * 12).toLocaleString()} annualized</div>
-                      </div>
-
-                      <div class="bg-slate-50 dark:bg-[#060c18] p-4 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                        <div class="text-slate-500 dark:text-slate-400 font-medium">% of Total New MRR</div>
-                        <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 numeric mt-1">
-                          {ret.expansionPctOfNewMrr}%
-                        </div>
-                        <div class="text-[11px] text-slate-400 mt-1">high-margin expansion efficiency</div>
-                      </div>
-                    </div>
-
-                    <div class="p-3 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-xs text-slate-600 dark:text-slate-400">
-                      ⚡ <strong>Expansion Drivers:</strong> GP seat expansion (+35%), Voice agent add-on (+45%), Billing agent add-on (+20%).
-                    </div>
-                  </div>
-
-                </div>
-
-              </div>
-            )}
-
-            {/* TAB 3: EFFICIENCY & FINANCIAL HEALTH (SECTION 4 METRICS) */}
-            {activeTab === 'health' && (
-              <div class="space-y-6">
-                
-                {/* Section Header */}
-                <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm">
-                  <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <Flame size={18} class="text-amber-500 dark:text-amber-400" /> 4. Efficiency & Financial Health Metrics
-                  </h3>
-                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Evaluating capital efficiency, burn velocity, Rule of 40 performance, and S&M conversion parameters.
-                  </p>
-                </div>
-
-                {/* 6 METRIC CARDS GRID */}
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  
-                  {/* 4.1 Burn Multiple */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      <span>4.1 Burn Multiple</span>
-                      <span class="px-2.5 py-0.5 rounded-full bg-[#00d2a0]/15 text-[#00d2a0] border border-[#00d2a0]/30 font-bold">
-                        {eff.burnMultiple}x
-                      </span>
-                    </div>
-
-                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
-                      {eff.burnMultiple}x
-                    </div>
-
-                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
-                      <div class="flex justify-between">
-                        <span>Net Annual Cash Burn:</span>
-                        <span class="font-bold text-slate-800 dark:text-slate-200">${eff.annualBurn.toLocaleString()}</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span>Net New ARR Generated:</span>
-                        <span class="font-bold text-[#00d2a0]">${eff.netNewArrAnnualized.toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
-                      📊 Series A AI Median: ~5.0x. CareGP's {eff.burnMultiple}x efficiency sits in the top 10% of venture-backed AI startups.
-                    </div>
-                  </div>
-
-                  {/* 4.2 Rule of 40 */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      <span>4.2 Rule of 40 Score</span>
-                      <span class="px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 font-bold">
-                        Target &ge; 40
-                      </span>
-                    </div>
-
-                    <div class="text-3xl font-bold text-purple-600 dark:text-purple-400 numeric">
-                      +{eff.ruleOf40Score}
-                    </div>
-
-                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
-                      <div class="flex justify-between">
-                        <span>YoY ARR Growth Rate:</span>
-                        <span class="font-bold text-[#00d2a0]">+{eff.yoyArrGrowthPct}%</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span>Operating Margin %:</span>
-                        <span class="font-bold text-amber-500">{eff.operatingMarginPct}%</span>
-                      </div>
-                    </div>
-
-                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
-                      🎯 Score = YoY ARR Growth % + Operating Margin %. Score &gt;40 indicates top-tier SaaS financial health.
-                    </div>
-                  </div>
-
-                  {/* 4.3 Runway */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      <span>4.3 Runway</span>
-                      <span class="px-2.5 py-0.5 rounded-full bg-[#0066ff]/15 text-[#0066ff] dark:text-[#388eff] border border-[#0066ff]/30 font-bold">
-                        {eff.runwayMonths} Months
-                      </span>
-                    </div>
-
-                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
-                      {eff.runwayMonths} <span class="text-sm font-normal text-slate-500 dark:text-slate-400">months</span>
-                    </div>
-
-                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
-                      <div class="flex justify-between">
-                        <span>Current Cash Balance:</span>
-                        <span class="font-bold text-slate-800 dark:text-slate-200">${eff.cashBalance.toLocaleString()}</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span>Avg Monthly Net Burn:</span>
-                        <span class="font-bold text-rose-500">${eff.netCashBurnMonthly.toLocaleString()} / mo</span>
-                      </div>
-                    </div>
-
-                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
-                      ⏳ Recalculated trailing 3-month average burn provides clear visibility into capital requirement dates.
-                    </div>
-                  </div>
-
-                  {/* 4.4 Free Cash Flow / Operating Margin */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      <span>4.4 FCF & Operating Margin</span>
-                      <span class="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-bold">
-                        {eff.fcfMarginPct}% FCF
-                      </span>
-                    </div>
-
-                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
-                      {eff.fcfMarginPct}%
-                    </div>
-
-                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
-                      <div class="flex justify-between">
-                        <span>Operating Margin:</span>
-                        <span class="font-bold text-amber-500">{eff.operatingMarginPct}%</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span>Gross Margin (Software):</span>
-                        <span class="font-bold text-[#00d2a0]">78.5%</span>
-                      </div>
-                    </div>
-
-                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
-                      💵 FCF tracks whether the business model sustains itself without external fundraising drag.
-                    </div>
-                  </div>
-
-                  {/* 4.5 Magic Number */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      <span>4.5 Magic Number</span>
-                      <span class="px-2.5 py-0.5 rounded-full bg-[#00d2a0]/15 text-[#00d2a0] border border-[#00d2a0]/30 font-bold">
-                        {eff.magicNumber}
-                      </span>
-                    </div>
-
-                    <div class="text-3xl font-bold text-[#00d2a0] numeric">
-                      {eff.magicNumber}
-                    </div>
-
-                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
-                      <div class="flex justify-between">
-                        <span>Annualized QoQ Delta ARR:</span>
-                        <span class="font-bold text-slate-800 dark:text-slate-200">${(eff.netNewArrAnnualized).toLocaleString()}</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span>Prior-Quarter S&M Spend:</span>
-                        <span class="font-bold text-slate-800 dark:text-slate-200">${eff.priorQuarterSmSpend.toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
-                      🚀 Above 0.75: Strong efficiency — keep investing aggressively in sales & marketing channels.
-                    </div>
-                  </div>
-
-                  {/* 4.6 SaaS Quick Ratio */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      <span>4.6 SaaS Quick Ratio</span>
-                      <span class="px-2.5 py-0.5 rounded-full bg-[#0066ff]/15 text-[#0066ff] dark:text-[#388eff] border border-[#0066ff]/30 font-bold">
-                        {eff.saasQuickRatio}x
-                      </span>
-                    </div>
-
-                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
-                      {eff.saasQuickRatio}x
-                    </div>
-
-                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
-                      <div class="flex justify-between">
-                        <span>New + Expansion MRR:</span>
-                        <span class="font-bold text-[#00d2a0]">+${(ret.newLogoMrr + ret.expansionMrr).toLocaleString()}</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span>Churn + Contraction MRR:</span>
-                        <span class="font-bold text-rose-500">−${(eff.churnMrr + eff.contractionMrr).toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
-                      ⚡ Ratio &gt; 4.0 demonstrates hypergrowth velocity where new revenue far outpaces baseline contraction.
-                    </div>
-                  </div>
-
-                </div>
-
-              </div>
-            )}
-
-            {/* TAB 4: OPERATIONAL METRICS (SECTION 5 METRICS) */}
-            {activeTab === 'operations' && (
-              <div class="space-y-6">
-                
-                <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm">
-                  <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <Cpu size={18} class="text-[#00a3ff]" /> 5. Operational Metrics (Driving Financial Outcomes)
-                  </h3>
-                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Leading operational indicators that drive Gross Margin, Customer Retention, and Per-Clinic ROI.
-                  </p>
-                </div>
-
+                {/* HIGHLIGHT: CLINIC SIZE & PAYMENT SCHEDULE QUICK CARDS */}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   
-                  {/* 5.1 Task Completion / Automation Rate */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
-                    <div class="flex items-center justify-between">
-                      <h4 class="text-sm font-bold text-slate-900 dark:text-white">5.1 Task Automation Rate</h4>
-                      <span class="px-3 py-1 rounded-full bg-[#00d2a0]/15 text-[#00d2a0] font-bold text-sm border border-[#00d2a0]/30">
-                        {ops.avgAutomationRatePct}%
-                      </span>
-                    </div>
-
-                    <p class="text-xs text-slate-500 dark:text-slate-400">
-                      Percentage of medical document workflows completed by CareGP agents end-to-end without human GP correction.
-                    </p>
-
-                    <div class="space-y-2">
-                      <div class="flex justify-between text-xs font-semibold">
-                        <span class="text-slate-700 dark:text-slate-300">Automated w/o Correction</span>
-                        <span class="text-[#00d2a0]">{ops.avgAutomationRatePct}%</span>
+                  {/* Clinic Size Summary */}
+                  <div class="bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-6">
+                      <div>
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                          <Building2 class="w-4 h-4 text-[#0066ff]" />
+                          Distribution by Clinic Size
+                        </h3>
+                        <p class="text-xs text-slate-400">ARR and practice count segmented by GP seats</p>
                       </div>
-                      <div class="w-full h-3 bg-slate-100 dark:bg-[#060c18] rounded-full overflow-hidden border border-slate-200 dark:border-[#1a2e4f]">
-                        <div class="h-full bg-[#00d2a0] rounded-full" style={{ width: `${ops.avgAutomationRatePct}%` }}></div>
-                      </div>
+                      <button onClick={() => setActiveTab('segmentation')} class="text-xs font-semibold text-[#0066ff] hover:underline flex items-center gap-1">
+                        Full Matrix <ArrowRight class="w-3 h-3" />
+                      </button>
                     </div>
 
-                    <div class="p-3 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-xs text-slate-600 dark:text-slate-400">
-                      🏥 Benchmark: Sohar Health cites 95% automation rate; LunaBill cites 10x claim follow-up throughput per biller.
-                    </div>
-                  </div>
-
-                  {/* 5.2 Cycle Time Reduction */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
-                    <div class="flex items-center justify-between">
-                      <h4 class="text-sm font-bold text-slate-900 dark:text-white">5.2 Cycle Time Reduction</h4>
-                      <span class="px-3 py-1 rounded-full bg-[#0066ff]/15 text-[#0066ff] dark:text-[#388eff] font-bold text-sm border border-[#0066ff]/30">
-                        {ops.avgCycleTimeReductionPct}% Faster
-                      </span>
-                    </div>
-
-                    <p class="text-xs text-slate-500 dark:text-slate-400">
-                      Time saved per medical document comparing pre-onboarding manual baseline (180s) vs CareGP AI processing time ({summary.avgTimePerDoc.toFixed(1)}s).
-                    </p>
-
-                    <div class="grid grid-cols-2 gap-3 text-center text-xs">
-                      <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                        <div class="text-slate-500 dark:text-slate-400 mb-1">Manual Baseline</div>
-                        <div class="text-lg font-bold text-slate-800 dark:text-slate-200">180 sec / doc</div>
-                      </div>
-                      <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                        <div class="text-slate-500 dark:text-slate-400 mb-1">CareGP Automated</div>
-                        <div class="text-lg font-bold text-[#00d2a0]">{summary.avgTimePerDoc.toFixed(1)} sec / doc</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 5.3 Exception Rate & Resolution Time */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
-                    <div class="flex items-center justify-between">
-                      <h4 class="text-sm font-bold text-slate-900 dark:text-white">5.3 Exception Rate & Breakdown</h4>
-                      <span class="px-3 py-1 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold text-sm border border-amber-500/30">
-                        {ops.avgExceptionRatePct}% Exception
-                      </span>
-                    </div>
-
-                    <p class="text-xs text-slate-500 dark:text-slate-400">
-                      Share of medical documents flagged for human review, categorized by cause:
-                    </p>
-
-                    <div class="space-y-2 text-xs">
-                      <div class="flex justify-between p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                        <span class="text-slate-700 dark:text-slate-300 font-medium">Low-Confidence AI Extractions:</span>
-                        <span class="font-bold text-amber-500">{ops.exceptionBreakdown.lowConfidencePct}%</span>
-                      </div>
-                      <div class="flex justify-between p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                        <span class="text-slate-700 dark:text-slate-300 font-medium">Unusual Document Format:</span>
-                        <span class="font-bold text-amber-500">{ops.exceptionBreakdown.unusualDocPct}%</span>
-                      </div>
-                      <div class="flex justify-between p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                        <span class="text-slate-700 dark:text-slate-300 font-medium">Compliance & Regulatory Flag:</span>
-                        <span class="font-bold text-rose-500">{ops.exceptionBreakdown.complianceFlagPct}%</span>
-                      </div>
-                    </div>
-
-                    <div class="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between pt-1">
-                      <span>Avg Compliance Resolution Time:</span>
-                      <span class="font-bold text-slate-800 dark:text-slate-200">{ops.complianceResolutionTimeMin} minutes</span>
-                    </div>
-                  </div>
-
-                  {/* 5.4 Per-Clinic ROI vs CareGP Unit Cost */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-4">
-                    <div class="flex items-center justify-between">
-                      <h4 class="text-sm font-bold text-slate-900 dark:text-white">5.4 Per-Clinic ROI vs CareGP Cost</h4>
-                      <span class="px-3 py-1 rounded-full bg-[#00d2a0]/15 text-[#00d2a0] font-bold text-sm border border-[#00d2a0]/30">
-                        Unit COGS: ${ops.careGpCostPerDocUnit}/doc
-                      </span>
-                    </div>
-
-                    <p class="text-xs text-slate-500 dark:text-slate-400">
-                      Cross-checking clinic return against CareGP's internal processing cost to ensure sustainable margin profile.
-                    </p>
-
-                    <div class="grid grid-cols-2 gap-3 text-xs">
-                      <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                        <div class="text-slate-500 dark:text-slate-400 font-medium">Average Clinic ROI Multiplier</div>
-                        <div class="text-2xl font-bold text-[#00d2a0] numeric mt-1">
-                          5.8x ROI
+                    <div class="space-y-4">
+                      {/* Small Practice */}
+                      <div class="bg-[#14233c] p-4 rounded-lg flex items-center justify-between border border-[#1a2e4f]">
+                        <div>
+                          <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-[#0066ff]"></span>
+                            <span class="text-sm font-bold text-white">Small Practice (1-3 GPs)</span>
+                          </div>
+                          <p class="text-xs text-slate-400 mt-1">{sizeSegmentation.small.count} Clinics • ARPU {fmtCurrency(sizeSegmentation.small.arpu)}</p>
                         </div>
-                        <div class="text-[10px] text-slate-400 mt-1">Dollar savings / subscription cost</div>
+                        <div class="text-right">
+                          <div class="text-base font-black text-white numeric">{fmtCurrency(sizeSegmentation.small.totalArr)}</div>
+                          <span class="text-xs text-slate-400">{sizeSegmentation.small.arrPct}% of ARR</span>
+                        </div>
                       </div>
 
-                      <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                        <div class="text-slate-500 dark:text-slate-400 font-medium">CareGP Processing COGS</div>
-                        <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 numeric mt-1">
-                          ${ops.careGpCostPerDocUnit}
+                      {/* Medium Centre */}
+                      <div class="bg-[#14233c] p-4 rounded-lg flex items-center justify-between border border-[#1a2e4f]">
+                        <div>
+                          <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-[#00d2a0]"></span>
+                            <span class="text-sm font-bold text-white">Medium Centre (4-9 GPs)</span>
+                          </div>
+                          <p class="text-xs text-slate-400 mt-1">{sizeSegmentation.medium.count} Clinics • ARPU {fmtCurrency(sizeSegmentation.medium.arpu)}</p>
                         </div>
-                        <div class="text-[10px] text-slate-400 mt-1">Per document processed</div>
+                        <div class="text-right">
+                          <div class="text-base font-black text-white numeric">{fmtCurrency(sizeSegmentation.medium.totalArr)}</div>
+                          <span class="text-xs text-slate-400">{sizeSegmentation.medium.arrPct}% of ARR</span>
+                        </div>
                       </div>
+
+                      {/* Large Practice */}
+                      <div class="bg-[#14233c] p-4 rounded-lg flex items-center justify-between border border-[#1a2e4f]">
+                        <div>
+                          <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+                            <span class="text-sm font-bold text-white">Large Practice (10+ GPs)</span>
+                          </div>
+                          <p class="text-xs text-slate-400 mt-1">{sizeSegmentation.large.count} Clinics • ARPU {fmtCurrency(sizeSegmentation.large.arpu)}</p>
+                        </div>
+                        <div class="text-right">
+                          <div class="text-base font-black text-white numeric">{fmtCurrency(sizeSegmentation.large.totalArr)}</div>
+                          <span class="text-xs text-slate-400">{sizeSegmentation.large.arrPct}% of ARR</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Schedule Summary */}
+                  <div class="bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-6">
+                      <div>
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                          <Receipt class="w-4 h-4 text-[#00d2a0]" />
+                          Payment Schedule Impact (Monthly vs Annual)
+                        </h3>
+                        <p class="text-xs text-slate-400">Cash flow predictability and churn risk comparison</p>
+                      </div>
+                      <button onClick={() => setActiveTab('segmentation')} class="text-xs font-semibold text-[#0066ff] hover:underline flex items-center gap-1">
+                        View Details <ArrowRight class="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                      {/* Monthly Plan Card */}
+                      <div class="bg-[#14233c] p-4 rounded-lg border border-[#1a2e4f]">
+                        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Monthly Billing</div>
+                        <div class="text-xl font-black text-white numeric mb-1">{fmtCurrency(paymentSegmentation.monthly.totalArr)}</div>
+                        <div class="text-xs text-slate-400">{paymentSegmentation.monthly.count} Clinics ({paymentSegmentation.monthly.arrPct}% ARR)</div>
+                        <div class="mt-3 pt-3 border-t border-[#1a2e4f] flex justify-between text-xs">
+                          <span class="text-slate-400">Churn Rate:</span>
+                          <span class="font-bold text-amber-400">{paymentSegmentation.monthly.logoChurnRate}%</span>
+                        </div>
+                      </div>
+
+                      {/* Annual Plan Card */}
+                      <div class="bg-[#14233c] p-4 rounded-lg border border-[#00d2a0]/30 relative overflow-hidden">
+                        <div class="text-xs font-semibold text-[#00d2a0] uppercase tracking-wider mb-1 flex items-center gap-1">
+                          <CheckCircle2 class="w-3 h-3" /> Annual Contract
+                        </div>
+                        <div class="text-xl font-black text-white numeric mb-1">{fmtCurrency(paymentSegmentation.annual.totalArr)}</div>
+                        <div class="text-xs text-slate-400">{paymentSegmentation.annual.count} Clinics ({paymentSegmentation.annual.arrPct}% ARR)</div>
+                        <div class="mt-3 pt-3 border-t border-[#1a2e4f] flex justify-between text-xs">
+                          <span class="text-slate-400">Churn Rate:</span>
+                          <span class="font-bold text-[#00d2a0]">{paymentSegmentation.annual.logoChurnRate}%</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="p-3 bg-[#00d2a0]/10 border border-[#00d2a0]/20 rounded-lg text-xs text-[#00d2a0] flex items-start gap-2">
+                      <Sparkles class="w-4 h-4 shrink-0 mt-0.5" />
+                      <span><strong>Upfront Cash Realization:</strong> Annual contracts collect <strong>{fmtCurrency(paymentSegmentation.annual.upfrontCashCollected)}</strong> upfront, extending runway by +4.2 months.</span>
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* 3 CAREGP AI AGENT PRODUCTS */}
+                <div class="bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-6">
+                  <div class="mb-6">
+                    <h3 class="text-lg font-bold text-white">CareGP Multi-Agent Suite Adoption</h3>
+                    <p class="text-xs text-slate-400">3 core AI agents driving clinic efficiency and expansion</p>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Agent 1: Documents */}
+                    <div class="bg-[#14233c] p-5 rounded-xl border border-[#1a2e4f]">
+                      <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                          <FileText class="w-5 h-5 text-[#0066ff]" />
+                          <h4 class="font-bold text-white text-sm">Documents Agent</h4>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#0066ff]/20 text-[#0066ff]">Core Standard</span>
+                      </div>
+                      <p class="text-xs text-slate-300 mb-4">Automates incoming medical letters, lab results & specialist reports into Best Practice / MedicalDirector.</p>
+                      <div class="space-y-2 text-xs">
+                        <div class="flex justify-between text-slate-400">
+                          <span>Active Clinics:</span>
+                          <span class="text-white font-bold">{summary.totalClinics - summary.droppedOffCount} Clinics (100%)</span>
+                        </div>
+                        <div class="flex justify-between text-slate-400">
+                          <span>Avg Processing Time:</span>
+                          <span class="text-[#00d2a0] font-bold">20s per document</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Agent 2: Voice */}
+                    <div class="bg-[#14233c] p-5 rounded-xl border border-[#1a2e4f]">
+                      <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                          <Mic class="w-5 h-5 text-[#00d2a0]" />
+                          <h4 class="font-bold text-white text-sm">Voice Agent</h4>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#00d2a0]/20 text-[#00d2a0]">High Growth</span>
+                      </div>
+                      <p class="text-xs text-slate-300 mb-4">Ambient clinical transcription during consultation, generating structured SOAP notes in real time.</p>
+                      <div class="space-y-2 text-xs">
+                        <div class="flex justify-between text-slate-400">
+                          <span>Adopted By:</span>
+                          <span class="text-white font-bold">Medium & Large Practices</span>
+                        </div>
+                        <div class="flex justify-between text-slate-400">
+                          <span>Time Saved:</span>
+                          <span class="text-[#00d2a0] font-bold">12 mins / consultation</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Agent 3: Billing */}
+                    <div class="bg-[#14233c] p-5 rounded-xl border border-[#1a2e4f]">
+                      <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                          <Receipt class="w-5 h-5 text-purple-400" />
+                          <h4 class="font-bold text-white text-sm">Billing Agent</h4>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400">Enterprise</span>
+                      </div>
+                      <p class="text-xs text-slate-300 mb-4">Medicare item optimization, bulk billing validation & rejection management with zero manual intervention.</p>
+                      <div class="space-y-2 text-xs">
+                        <div class="flex justify-between text-slate-400">
+                          <span>Adopted By:</span>
+                          <span class="text-white font-bold">Large Superclinics</span>
+                        </div>
+                        <div class="flex justify-between text-slate-400">
+                          <span>Revenue Lift:</span>
+                          <span class="text-purple-400 font-bold">+8.4% Medicare recovery</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* TAB 2: SIZE & BILLING BREAKDOWN */}
+            {activeTab === 'segmentation' && (
+              <div class="space-y-8">
+                
+                <div class="bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-6">
+                  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                      <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <Building2 class="w-5 h-5 text-[#0066ff]" />
+                        Clinic Size & Payment Schedule Analysis
+                      </h2>
+                      <p class="text-xs text-slate-400 mt-0.5">
+                        Categorizing CareGP practices by GP count (Small 1-3, Medium 4-9, Large 10+) and payment schedule (Monthly vs Annual)
+                      </p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                      <span class="px-3 py-1 bg-[#14233c] text-slate-300 border border-[#1a2e4f] rounded-lg text-xs font-semibold">
+                        Total Active ARR: {fmtCurrency(summary.totalLiveArr)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* CLINIC SIZE SEGMENTATION CARDS */}
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    
+                    {/* Small Practice */}
+                    <div class="bg-[#14233c] border border-[#1a2e4f] rounded-xl p-5 hover:border-[#0066ff]/50 transition-colors">
+                      <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold text-[#0066ff] uppercase tracking-wider">1 to 3 GPs</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#0066ff]/20 text-[#0066ff]">
+                          {sizeSegmentation.small.arrPct}% ARR
+                        </span>
+                      </div>
+                      <h3 class="text-lg font-black text-white mb-1">Small Practice</h3>
+                      <p class="text-xs text-slate-400 mb-4">{sizeSegmentation.small.count} Clinics • {sizeSegmentation.small.totalGps} GP Seats</p>
+                      
+                      <div class="space-y-2 pt-3 border-t border-[#1a2e4f] text-xs">
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Total ARR:</span>
+                          <span class="font-bold text-white numeric">{fmtCurrency(sizeSegmentation.small.totalArr)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Avg ARR / Clinic (ARPU):</span>
+                          <span class="font-bold text-white numeric">{fmtCurrency(sizeSegmentation.small.arpu)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Agent Attach Rate:</span>
+                          <span class="font-bold text-[#00d2a0]">{sizeSegmentation.small.avgAgentAttach} Agents</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Monthly vs Annual:</span>
+                          <span class="font-bold text-slate-300">{sizeSegmentation.small.monthlyCount} M / {sizeSegmentation.small.annualCount} A</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Churn Rate:</span>
+                          <span class="font-bold text-amber-400">{sizeSegmentation.small.churnRate}%</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Medium Centre */}
+                    <div class="bg-[#14233c] border border-[#1a2e4f] rounded-xl p-5 hover:border-[#00d2a0]/50 transition-colors">
+                      <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold text-[#00d2a0] uppercase tracking-wider">4 to 9 GPs</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#00d2a0]/20 text-[#00d2a0]">
+                          {sizeSegmentation.medium.arrPct}% ARR
+                        </span>
+                      </div>
+                      <h3 class="text-lg font-black text-white mb-1">Medium Medical Centre</h3>
+                      <p class="text-xs text-slate-400 mb-4">{sizeSegmentation.medium.count} Clinics • {sizeSegmentation.medium.totalGps} GP Seats</p>
+                      
+                      <div class="space-y-2 pt-3 border-t border-[#1a2e4f] text-xs">
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Total ARR:</span>
+                          <span class="font-bold text-white numeric">{fmtCurrency(sizeSegmentation.medium.totalArr)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Avg ARR / Clinic (ARPU):</span>
+                          <span class="font-bold text-white numeric">{fmtCurrency(sizeSegmentation.medium.arpu)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Agent Attach Rate:</span>
+                          <span class="font-bold text-[#00d2a0]">{sizeSegmentation.medium.avgAgentAttach} Agents</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Monthly vs Annual:</span>
+                          <span class="font-bold text-slate-300">{sizeSegmentation.medium.monthlyCount} M / {sizeSegmentation.medium.annualCount} A</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Churn Rate:</span>
+                          <span class="font-bold text-[#00d2a0]">{sizeSegmentation.medium.churnRate}%</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Large Practice */}
+                    <div class="bg-[#14233c] border border-[#1a2e4f] rounded-xl p-5 hover:border-purple-500/50 transition-colors">
+                      <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold text-purple-400 uppercase tracking-wider">10+ GPs</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400">
+                          {sizeSegmentation.large.arrPct}% ARR
+                        </span>
+                      </div>
+                      <h3 class="text-lg font-black text-white mb-1">Large Healthcare Group</h3>
+                      <p class="text-xs text-slate-400 mb-4">{sizeSegmentation.large.count} Clinics • {sizeSegmentation.large.totalGps} GP Seats</p>
+                      
+                      <div class="space-y-2 pt-3 border-t border-[#1a2e4f] text-xs">
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Total ARR:</span>
+                          <span class="font-bold text-white numeric">{fmtCurrency(sizeSegmentation.large.totalArr)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Avg ARR / Clinic (ARPU):</span>
+                          <span class="font-bold text-white numeric">{fmtCurrency(sizeSegmentation.large.arpu)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Agent Attach Rate:</span>
+                          <span class="font-bold text-purple-400">{sizeSegmentation.large.avgAgentAttach} Agents</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Monthly vs Annual:</span>
+                          <span class="font-bold text-slate-300">{sizeSegmentation.large.monthlyCount} M / {sizeSegmentation.large.annualCount} A</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-slate-400">Churn Rate:</span>
+                          <span class="font-bold text-[#00d2a0]">{sizeSegmentation.large.churnRate}%</span>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* MATRIX TABLE: SIZE x PAYMENT SCHEDULE */}
+                  <div class="mt-8">
+                    <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+                      <Layers class="w-4 h-4 text-[#00d2a0]" />
+                      Size × Payment Schedule Breakdown Matrix
+                    </h3>
+
+                    <div class="overflow-x-auto rounded-xl border border-[#1a2e4f]">
+                      <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-[#14233c] text-slate-400 uppercase font-bold text-[11px] border-b border-[#1a2e4f]">
+                          <tr>
+                            <th class="p-3.5">Clinic Size Tier</th>
+                            <th class="p-3.5">Payment Schedule</th>
+                            <th class="p-3.5 text-right">Clinic Count</th>
+                            <th class="p-3.5 text-right">Total ARR</th>
+                            <th class="p-3.5 text-right">Avg ARPU</th>
+                            <th class="p-3.5 text-right">Logo Churn %</th>
+                            <th class="p-3.5 text-center">Cash Flow Profile</th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#1a2e4f]">
+                          {matrix.map((row, idx) => (
+                            <tr key={idx} class="hover:bg-[#14233c]/60 transition-colors">
+                              <td class="p-3.5 font-bold text-white">{row.sizeLabel}</td>
+                              <td class="p-3.5">
+                                <span class={`px-2 py-0.5 rounded font-bold text-[11px] ${
+                                  row.schedule === 'Annual' 
+                                    ? 'bg-[#00d2a0]/20 text-[#00d2a0] border border-[#00d2a0]/30' 
+                                    : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                                }`}>
+                                  {row.schedule}
+                                </span>
+                              </td>
+                              <td class="p-3.5 text-right font-bold text-white numeric">{row.clinics}</td>
+                              <td class="p-3.5 text-right font-bold text-[#00d2a0] numeric">{fmtCurrency(row.arr)}</td>
+                              <td class="p-3.5 text-right font-medium text-white numeric">{fmtCurrency(row.arpu)}</td>
+                              <td class="p-3.5 text-right font-bold numeric">
+                                <span class={row.churnRate > 5 ? 'text-amber-400' : 'text-[#00d2a0]'}>
+                                  {row.churnRate}%
+                                </span>
+                              </td>
+                              <td class="p-3.5 text-center text-slate-400">
+                                {row.schedule === 'Annual' ? '12-Mo Upfront Cash' : 'Month-to-Month'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
 
@@ -1417,528 +840,398 @@
               </div>
             )}
 
-            {/* TAB 5: STRATEGIC & RISK METRICS (SECTION 6 METRICS) */}
-            {activeTab === 'strategic' && (
+            {/* TAB 3: SAAS & UNIT ECONOMICS */}
+            {activeTab === 'saas' && (
+              <div class="space-y-8">
+                
+                <div class="bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-6">
+                  <div class="mb-6">
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                      <BarChart3 class="w-5 h-5 text-purple-400" />
+                      SaaS Unit Economics & Efficiency Metrics
+                    </h2>
+                    <p class="text-xs text-slate-400">Key metrics for capital efficiency, growth trajectory, and customer retention</p>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    
+                    {/* Burn Multiple */}
+                    <div class="bg-[#14233c] p-5 rounded-xl border border-[#1a2e4f]">
+                      <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-semibold text-slate-400 uppercase">Burn Multiple</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#00d2a0]/20 text-[#00d2a0]">Top Tier (&lt;2x)</span>
+                      </div>
+                      <div class="text-2xl font-black text-white numeric mb-1">{summary.burnMultiple}x</div>
+                      <p class="text-xs text-slate-300 mb-3">Net cash burn spent per new dollar of ARR generated.</p>
+                      <div class="text-[11px] text-slate-400 bg-[#0d182b] p-2.5 rounded border border-[#1a2e4f]">
+                        Benchmark: Median Series A AI startup runs ~5x; CareGP runs efficiently at {summary.burnMultiple}x.
+                      </div>
+                    </div>
+
+                    {/* Quick Ratio */}
+                    <div class="bg-[#14233c] p-5 rounded-xl border border-[#1a2e4f]">
+                      <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-semibold text-slate-400 uppercase">SaaS Quick Ratio</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#00d2a0]/20 text-[#00d2a0]">Strong (&gt;4.0)</span>
+                      </div>
+                      <div class="text-2xl font-black text-white numeric mb-1">4.8x</div>
+                      <p class="text-xs text-slate-300 mb-3">Ratio of revenue gained vs revenue lost in period.</p>
+                      <div class="text-[11px] text-slate-400 bg-[#0d182b] p-2.5 rounded border border-[#1a2e4f]">
+                        New + Expansion MRR outpaces Churn + Contraction MRR by 4.8x.
+                      </div>
+                    </div>
+
+                    {/* Rule of 40 */}
+                    <div class="bg-[#14233c] p-5 rounded-xl border border-[#1a2e4f]">
+                      <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-semibold text-slate-400 uppercase">Rule of 40 Score</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400">Target Met (&gt;40)</span>
+                      </div>
+                      <div class="text-2xl font-black text-white numeric mb-1">102.1</div>
+                      <p class="text-xs text-slate-300 mb-3">YoY ARR Growth % + Operating Margin %</p>
+                      <div class="text-[11px] text-slate-400 bg-[#0d182b] p-2.5 rounded border border-[#1a2e4f]">
+                        High growth (128.5%) balances early investment margin (-26.4%).
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+
+            {/* TAB 4: CLINIC DIRECTORY */}
+            {activeTab === 'directory' && (
               <div class="space-y-6">
                 
-                <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm">
-                  <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <Award size={18} class="text-purple-600 dark:text-purple-400" /> 6. Additional Strategic & Risk Metrics
-                  </h3>
-                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Customer sentiment, collection efficiency, time to value, concentration risk, and headcount productivity.
-                  </p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-6">
                   
-                  {/* 6.1 Net Promoter Score (NPS) */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      <span>6.1 Net Promoter Score (NPS)</span>
-                      <span class="px-2.5 py-0.5 rounded-full bg-[#00d2a0]/15 text-[#00d2a0] font-bold">
-                        +{strat.npsScore}
-                      </span>
-                    </div>
-
-                    <div class="text-3xl font-bold text-[#00d2a0] numeric">
-                      +{strat.npsScore}
-                    </div>
-
-                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
-                      <div class="flex justify-between">
-                        <span class="text-[#00d2a0] font-semibold">Promoters (9-10):</span>
-                        <span class="font-bold text-[#00d2a0]">{strat.promotersPct}%</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span class="text-rose-500 font-semibold">Detractors (0-6):</span>
-                        <span class="font-bold text-rose-500">{strat.detractorsPct}%</span>
-                      </div>
-                    </div>
-
-                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
-                      💬 Strong NPS across medical practices directly accelerates organic word-of-mouth clinic referrals.
-                    </div>
-                  </div>
-
-                  {/* 6.2 Days Sales Outstanding (DSO) */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      <span>6.2 Days Sales Outstanding (DSO)</span>
-                      <span class="px-2.5 py-0.5 rounded-full bg-[#0066ff]/15 text-[#0066ff] dark:text-[#388eff] font-bold">
-                        {strat.dsoDays} Days
-                      </span>
-                    </div>
-
-                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
-                      {strat.dsoDays} <span class="text-sm font-normal text-slate-500 dark:text-slate-400">days</span>
-                    </div>
-
-                    <div class="text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
-                      Average days to collect payment after invoicing medical practices.
-                    </div>
-
-                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
-                      💳 CareGP's Billing Agent also automates clinics' own patient collections, bringing DSO down network-wide.
-                    </div>
-                  </div>
-
-                  {/* 6.3 Time to Value */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      <span>6.3 Time to Value</span>
-                      <span class="px-2.5 py-0.5 rounded-full bg-[#00a3ff]/15 text-[#00a3ff] font-bold">
-                        {strat.avgTimeToValueDays} Days
-                      </span>
-                    </div>
-
-                    <div class="text-3xl font-bold text-[#00a3ff] numeric">
-                      {strat.avgTimeToValueDays} <span class="text-sm font-normal text-slate-500 dark:text-slate-400">days</span>
-                    </div>
-
-                    <div class="text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
-                      Time elapsed from contract signature date to first meaningful uploader threshold (&gt;50% docs processed).
-                    </div>
-
-                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
-                      ⏱️ Faster time-to-value directly lowers 90-day pilot drop-off risk.
-                    </div>
-                  </div>
-
-                  {/* 6.4 Concentration Risk */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      <span>6.4 Concentration Risk</span>
-                      <span class="px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400 font-bold">
-                        {strat.top10ConcentrationPct}%
-                      </span>
-                    </div>
-
-                    <div class="text-3xl font-bold text-slate-900 dark:text-white numeric">
-                      {strat.top10ConcentrationPct}%
-                    </div>
-
-                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
-                      <div class="flex justify-between">
-                        <span>Top 10 Clinics ARR:</span>
-                        <span class="font-bold text-slate-800 dark:text-slate-200">${strat.top10ArrSum.toLocaleString()}</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span>Total Live ARR:</span>
-                        <span class="font-bold text-[#00d2a0]">${summary.totalLiveArr.toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
-                      🛡️ Concentration under 30% ensures no single clinic group decision poses existential revenue risk.
-                    </div>
-                  </div>
-
-                  {/* 6.5 Revenue per FTE */}
-                  <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-5 shadow-sm space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      <span>6.5 Revenue per FTE</span>
-                      <span class="px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400 font-bold">
-                        ${(strat.revenuePerFte/1000).toFixed(0)}k / FTE
-                      </span>
-                    </div>
-
-                    <div class="text-3xl font-bold text-purple-600 dark:text-purple-400 numeric">
-                      ${strat.revenuePerFte.toLocaleString()}
-                    </div>
-
-                    <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-[#1a2e4f] pt-2">
-                      <div class="flex justify-between">
-                        <span>Total Headcount (FTEs):</span>
-                        <span class="font-bold text-slate-800 dark:text-slate-200">{strat.totalFte} employees</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span>Live ARR:</span>
-                        <span class="font-bold text-[#00d2a0]">${summary.totalLiveArr.toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    <div class="p-2.5 bg-slate-50 dark:bg-[#060c18] rounded-lg border border-slate-200 dark:border-[#1a2e4f] text-[11px] text-slate-600 dark:text-slate-400">
-                      👥 A rising revenue per FTE confirms that agent software leverage — not headcount — absorbs growth.
-                    </div>
-                  </div>
-
-                </div>
-
-              </div>
-            )}
-
-            {/* TAB 6: CAREGP ROI MODELER */}
-            {activeTab === 'calculator' && (
-              <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                
-                {/* Controls */}
-                <div class="lg:col-span-6 bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-6 shadow-sm space-y-6">
-                  <div>
-                    <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <Calculator class="text-[#0066ff]" size={18} /> CareGP Practice ROI & Financial Modeler
-                    </h3>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Adjust practice parameters and financial inputs to calculate live ROI, Runway impact, and multi-agent expansion economics.
-                    </p>
-                  </div>
-
-                  <div class="space-y-5">
-                    <div>
-                      <div class="flex justify-between text-xs font-semibold mb-2">
-                        <span class="text-slate-700 dark:text-slate-300">GPs in Practice</span>
-                        <span class="text-[#0066ff] dark:text-[#388eff] font-bold">{simGps} GPs</span>
-                      </div>
+                  {/* SEARCH & FILTERS BAR */}
+                  <div class="flex flex-col lg:flex-row gap-4 justify-between items-center mb-6">
+                    
+                    {/* Search Input */}
+                    <div class="relative w-full lg:w-80">
+                      <Search class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                       <input 
-                        type="range" min="1" max="100" value={simGps} 
-                        onChange={(e) => setSimGps(Number(e.target.value))}
-                        class="w-full accent-[#0066ff] bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer"
+                        type="text" 
+                        placeholder="Search clinic name or details..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        class="w-full bg-[#14233c] border border-[#1a2e4f] focus:border-[#0066ff] rounded-lg pl-10 pr-4 py-2 text-xs text-white placeholder-slate-400 outline-none transition-colors"
                       />
-                    </div>
-
-                    <div>
-                      <div class="flex justify-between text-xs font-semibold mb-2">
-                        <span class="text-slate-700 dark:text-slate-300">Daily Documents per GP</span>
-                        <span class="text-[#0066ff] dark:text-[#388eff] font-bold">{simDocsPerGp} docs/day</span>
-                      </div>
-                      <input 
-                        type="range" min="5" max="80" value={simDocsPerGp} 
-                        onChange={(e) => setSimDocsPerGp(Number(e.target.value))}
-                        class="w-full accent-[#0066ff] bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer"
-                      />
-                    </div>
-
-                    <div>
-                      <div class="flex justify-between text-xs font-semibold mb-2">
-                        <span class="text-slate-700 dark:text-slate-300">GP Hourly Value Rate ($/hr)</span>
-                        <span class="text-[#0066ff] dark:text-[#388eff] font-bold">${simGpRate}/hr</span>
-                      </div>
-                      <input 
-                        type="range" min="80" max="300" step="5" value={simGpRate} 
-                        onChange={(e) => setSimGpRate(Number(e.target.value))}
-                        class="w-full accent-[#0066ff] bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer"
-                      />
-                    </div>
-
-                    <div>
-                      <div class="flex justify-between text-xs font-semibold mb-2">
-                        <span class="text-slate-700 dark:text-slate-300">CareGP Time Saved per Doc (seconds)</span>
-                        <span class="text-[#00d2a0] font-bold">{simTimeSavedSec} seconds</span>
-                      </div>
-                      <input 
-                        type="range" min="5" max="60" value={simTimeSavedSec} 
-                        onChange={(e) => setSimTimeSavedSec(Number(e.target.value))}
-                        class="w-full accent-[#00d2a0] bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer"
-                      />
-                    </div>
-
-                    <div>
-                      <div class="flex justify-between text-xs font-semibold mb-2">
-                        <span class="text-slate-700 dark:text-slate-300">CareGP Monthly Net Cash Burn ($)</span>
-                        <span class="text-amber-500 font-bold">${simMonthlyBurn.toLocaleString()} / mo</span>
-                      </div>
-                      <input 
-                        type="range" min="30000" max="250000" step="5000" value={simMonthlyBurn} 
-                        onChange={(e) => setSimMonthlyBurn(Number(e.target.value))}
-                        class="w-full accent-amber-500 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Results */}
-                <div class="lg:col-span-6 bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl p-6 shadow-sm flex flex-col justify-between space-y-6">
-                  <div>
-                    <span class="text-xs font-bold uppercase tracking-wider text-[#00d2a0] bg-[#00d2a0]/15 px-3 py-1 rounded-full border border-[#00d2a0]/30">
-                      Modeler Output
-                    </span>
-                    <h4 class="text-xl font-bold text-slate-900 dark:text-white mt-3">Projected Annual Financial Outcomes</h4>
-                  </div>
-
-                  <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-slate-50 dark:bg-[#060c18] p-4 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
-                      <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Annual Hours Reclaimed</div>
-                      <div class="text-2xl font-bold text-slate-900 dark:text-white numeric mt-1">
-                        {Number(simResults.annualHours).toLocaleString()} <span class="text-xs font-normal text-slate-500 dark:text-slate-400">hrs/yr</span>
-                      </div>
-                    </div>
-
-                    <div class="bg-slate-50 dark:bg-[#060c18] p-4 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
-                      <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Gross Value Saved</div>
-                      <div class="text-2xl font-bold text-[#00d2a0] numeric mt-1">
-                        ${Number(simResults.annualGrossSavings).toLocaleString()}
-                      </div>
-                    </div>
-
-                    <div class="bg-slate-50 dark:bg-[#060c18] p-4 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
-                      <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Estimated Platform Cost</div>
-                      <div class="text-xl font-bold text-slate-700 dark:text-slate-300 numeric mt-1">
-                        ${Number(simResults.estSubAnnual).toLocaleString()}
-                      </div>
-                    </div>
-
-                    <div class="bg-[#00d2a0]/10 p-4 rounded-xl border border-[#00d2a0]/30">
-                      <div class="text-xs text-[#00d2a0] font-bold">Net Annual ROI</div>
-                      <div class="text-2xl font-bold text-[#00d2a0] numeric mt-1">
-                        ${Number(simResults.netAnnualSavings).toLocaleString()}
-                      </div>
-                      <div class="text-[11px] text-[#00d2a0] mt-1 font-bold">
-                        ⚡ {simResults.roiMult}x ROI Multiplier
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="p-4 rounded-xl bg-slate-50 dark:bg-[#060c18] border border-slate-200 dark:border-[#1a2e4f] text-xs text-slate-600 dark:text-slate-400">
-                    <p class="font-bold text-slate-900 dark:text-slate-200 mb-1">Company Health Impact:</p>
-                    With ${simMonthlyBurn.toLocaleString()}/mo net burn and ${simCashBalance.toLocaleString()} cash in bank, CareGP maintains <strong class="text-[#0066ff] dark:text-[#388eff]">{simResults.runway} months of runway</strong>.
-                  </div>
-                </div>
-
-              </div>
-            )}
-
-            {/* TAB 7: CLINICS DIRECTORY */}
-            {activeTab === 'clinics' && (
-              <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-xl overflow-hidden shadow-lg">
-                
-                <div class="p-4 border-b border-slate-200 dark:border-[#1a2e4f] flex flex-wrap items-center justify-between gap-4 bg-slate-50 dark:bg-[#0f1c33]">
-                  <div class="flex items-center gap-3">
-                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Medical Practices Directory</h3>
-                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
-                      Showing {paginatedClinics.length} of {sortedClinics.length} clinics
-                    </span>
-                  </div>
-
-                  <div class="text-xs text-slate-500 dark:text-slate-400">
-                    Click any practice row to inspect agent adoption, accuracy & ROI.
-                  </div>
-                </div>
-
-                <div class="overflow-x-auto">
-                  <table class="w-full text-xs text-left border-collapse">
-                    <thead class="bg-slate-100 dark:bg-[#060c18] text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-[#1a2e4f] uppercase tracking-wider text-[11px]">
-                      <tr>
-                        <th onClick={() => handleSort('name')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors">
-                          Clinic Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
-                        </th>
-                        <th onClick={() => handleSort('status')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors">
-                          Status {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
-                        </th>
-                        <th onClick={() => handleSort('numGps')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors text-right numeric">
-                          GPs {sortField === 'numGps' && (sortDirection === 'asc' ? '↑' : '↓')}
-                        </th>
-                        <th onClick={() => handleSort('agentCount')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors text-center">
-                          Agents {sortField === 'agentCount' && (sortDirection === 'asc' ? '↑' : '↓')}
-                        </th>
-                        <th onClick={() => handleSort('monthlySubscription')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors text-right numeric">
-                          Sub ($/mo) {sortField === 'monthlySubscription' && (sortDirection === 'asc' ? '↑' : '↓')}
-                        </th>
-                        <th onClick={() => handleSort('uploaderPct')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors text-right numeric">
-                          Uploader % {sortField === 'uploaderPct' && (sortDirection === 'asc' ? '↑' : '↓')}
-                        </th>
-                        <th onClick={() => handleSort('avgAccuracy')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors text-right numeric">
-                          Avg Accuracy {sortField === 'avgAccuracy' && (sortDirection === 'asc' ? '↑' : '↓')}
-                        </th>
-                        <th onClick={() => handleSort('totalHoursSaved')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors text-right numeric">
-                          Hours Saved {sortField === 'totalHoursSaved' && (sortDirection === 'asc' ? '↑' : '↓')}
-                        </th>
-                        <th onClick={() => handleSort('financialSavings')} class="p-3.5 cursor-pointer hover:text-[#0066ff] transition-colors text-right numeric">
-                          Financial ROI ($) {sortField === 'financialSavings' && (sortDirection === 'asc' ? '↑' : '↓')}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-200 dark:divide-[#1a2e4f]/60">
-                      {paginatedClinics.map((c) => (
-                        <tr 
-                          key={c.id}
-                          onClick={() => setSelectedClinic(c)}
-                          class="hover:bg-slate-50 dark:hover:bg-[#172745]/60 cursor-pointer transition-colors group"
-                        >
-                          <td class="p-3.5 font-bold text-slate-800 dark:text-slate-200 group-hover:text-[#0066ff] dark:group-hover:text-[#388eff] transition-colors max-w-xs truncate">
-                            {c.name}
-                          </td>
-                          <td class="p-3.5">{getStatusBadge(c.status)}</td>
-                          <td class="p-3.5 text-right numeric text-slate-700 dark:text-slate-300">{c.numGps || '-'}</td>
-                          <td class="p-3.5 text-center">
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
-                              {c.agentCount} Agents
-                            </span>
-                          </td>
-                          <td class="p-3.5 text-right numeric text-slate-700 dark:text-slate-300">${c.monthlySubscription.toLocaleString()}</td>
-                          <td class="p-3.5 text-right numeric font-semibold text-slate-800 dark:text-slate-200">
-                            {c.uploaderPct > 0 ? `${c.uploaderPct.toFixed(1)}%` : '-'}
-                          </td>
-                          <td class="p-3.5 text-right numeric text-slate-700 dark:text-slate-300">
-                            {c.avgAccuracy > 0 ? (
-                              <span class={c.avgAccuracy >= 85 ? 'text-[#00d2a0] font-bold' : 'text-amber-500 font-semibold'}>
-                                {c.avgAccuracy.toFixed(1)}%
-                              </span>
-                            ) : '-'}
-                          </td>
-                          <td class="p-3.5 text-right numeric text-slate-700 dark:text-slate-300">
-                            {c.totalHoursSaved > 0 ? `${Math.round(c.totalHoursSaved).toLocaleString()} h` : '-'}
-                          </td>
-                          <td class="p-3.5 text-right numeric font-bold text-[#00d2a0]">
-                            {c.financialSavings > 0 ? `$${Math.round(c.financialSavings).toLocaleString()}` : '-'}
-                          </td>
-                        </tr>
-                      ))}
-
-                      {paginatedClinics.length === 0 && (
-                        <tr>
-                          <td colspan="9" class="p-8 text-center text-slate-500">
-                            No clinics matched your filter or search query.
-                          </td>
-                        </tr>
+                      {searchQuery && (
+                        <button onClick={() => setSearchQuery('')} class="absolute right-3 top-2.5 text-slate-400 hover:text-white">
+                          <X class="w-4 h-4" />
+                        </button>
                       )}
-                    </tbody>
-                  </table>
-                </div>
+                    </div>
 
-                <div class="p-3 border-t border-slate-200 dark:border-[#1a2e4f] flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-[#060c18]">
-                  <span>Page {page} of {totalPages}</span>
-                  <div class="flex items-center gap-1">
-                    <button 
-                      onClick={() => setPage(p => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                      class="px-3 py-1 rounded-lg bg-white dark:bg-[#0f1c33] hover:bg-slate-100 dark:hover:bg-[#1a2e4f] disabled:opacity-40 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#1a2e4f] font-medium"
-                    >
-                      Previous
-                    </button>
-                    <button 
-                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                      disabled={page === totalPages}
-                      class="px-3 py-1 rounded-lg bg-white dark:bg-[#0f1c33] hover:bg-slate-100 dark:hover:bg-[#1a2e4f] disabled:opacity-40 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#1a2e4f] font-medium"
-                    >
-                      Next
-                    </button>
+                    {/* Filters */}
+                    <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                      
+                      {/* Size Filter */}
+                      <div class="flex items-center gap-1.5 bg-[#14233c] border border-[#1a2e4f] rounded-lg px-3 py-1.5 text-xs">
+                        <Building2 class="w-3.5 h-3.5 text-[#0066ff]" />
+                        <span class="text-slate-400">Size:</span>
+                        <select 
+                          value={sizeFilter} 
+                          onChange={(e) => setSizeFilter(e.target.value)}
+                          class="bg-transparent text-white font-medium outline-none cursor-pointer"
+                        >
+                          <option value="All" class="bg-[#0d182b]">All Sizes</option>
+                          <option value="small" class="bg-[#0d182b]">Small (1-3 GPs)</option>
+                          <option value="medium" class="bg-[#0d182b]">Medium (4-9 GPs)</option>
+                          <option value="large" class="bg-[#0d182b]">Large (10+ GPs)</option>
+                        </select>
+                      </div>
+
+                      {/* Payment Schedule Filter */}
+                      <div class="flex items-center gap-1.5 bg-[#14233c] border border-[#1a2e4f] rounded-lg px-3 py-1.5 text-xs">
+                        <Receipt class="w-3.5 h-3.5 text-[#00d2a0]" />
+                        <span class="text-slate-400">Billing:</span>
+                        <select 
+                          value={paymentFilter} 
+                          onChange={(e) => setPaymentFilter(e.target.value)}
+                          class="bg-transparent text-white font-medium outline-none cursor-pointer"
+                        >
+                          <option value="All" class="bg-[#0d182b]">All Schedules</option>
+                          <option value="Monthly" class="bg-[#0d182b]">Monthly</option>
+                          <option value="Annual" class="bg-[#0d182b]">Annual</option>
+                        </select>
+                      </div>
+
+                      {/* Status Filter */}
+                      <div class="flex items-center gap-1.5 bg-[#14233c] border border-[#1a2e4f] rounded-lg px-3 py-1.5 text-xs">
+                        <Filter class="w-3.5 h-3.5 text-purple-400" />
+                        <span class="text-slate-400">Status:</span>
+                        <select 
+                          value={statusFilter} 
+                          onChange={(e) => setStatusFilter(e.target.value)}
+                          class="bg-transparent text-white font-medium outline-none cursor-pointer"
+                        >
+                          <option value="All" class="bg-[#0d182b]">All Statuses</option>
+                          <option value="Closed" class="bg-[#0d182b]">Closed (Active)</option>
+                          <option value="Pilot" class="bg-[#0d182b]">Pilot</option>
+                          <option value="Warm Pilot" class="bg-[#0d182b]">Warm Pilot</option>
+                          <option value="Dropped Off" class="bg-[#0d182b]">Dropped Off</option>
+                        </select>
+                      </div>
+
+                    </div>
+
                   </div>
+
+                  {/* DIRECTORY TABLE */}
+                  <div class="overflow-x-auto rounded-xl border border-[#1a2e4f]">
+                    <table class="w-full text-left text-xs text-slate-300">
+                      <thead class="bg-[#14233c] text-slate-400 uppercase font-bold text-[11px] border-b border-[#1a2e4f]">
+                        <tr>
+                          <th class="p-3.5">Clinic Name</th>
+                          <th class="p-3.5">Status</th>
+                          <th class="p-3.5">Size Category</th>
+                          <th class="p-3.5">Payment Schedule</th>
+                          <th class="p-3.5 text-right">GPs</th>
+                          <th class="p-3.5 text-right">ARR</th>
+                          <th class="p-3.5 text-right">Agents</th>
+                          <th class="p-3.5 text-right">Hours Saved</th>
+                          <th class="p-3.5 text-center">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-[#1a2e4f]">
+                        {filteredClinics.map((c) => (
+                          <tr key={c.id} class="hover:bg-[#14233c]/60 transition-colors">
+                            <td class="p-3.5 font-bold text-white">{c.name}</td>
+                            <td class="p-3.5">
+                              <span class={`px-2 py-0.5 rounded font-bold text-[10px] ${
+                                c.status === 'Closed' ? 'bg-[#00d2a0]/20 text-[#00d2a0]' :
+                                c.status === 'Pilot' ? 'bg-[#0066ff]/20 text-[#0066ff]' :
+                                c.status === 'Warm Pilot' ? 'bg-amber-500/20 text-amber-400' :
+                                'bg-red-500/20 text-red-400'
+                              }`}>
+                                {c.status}
+                              </span>
+                            </td>
+                            <td class="p-3.5 text-slate-300">{c.clinicSizeCategory}</td>
+                            <td class="p-3.5">
+                              <span class={`px-2 py-0.5 rounded font-semibold text-[10px] ${
+                                c.paymentSchedule === 'Annual' 
+                                  ? 'bg-[#00d2a0]/15 text-[#00d2a0] border border-[#00d2a0]/30' 
+                                  : 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+                              }`}>
+                                {c.paymentSchedule}
+                              </span>
+                            </td>
+                            <td class="p-3.5 text-right font-bold text-white numeric">{c.numGps}</td>
+                            <td class="p-3.5 text-right font-bold text-[#00d2a0] numeric">{fmtCurrency(c.arr)}</td>
+                            <td class="p-3.5 text-right font-bold text-white">{c.agentCount} / 3</td>
+                            <td class="p-3.5 text-right font-bold text-white numeric">{fmtNum(c.totalHoursSaved)} hr</td>
+                            <td class="p-3.5 text-center">
+                              <button 
+                                onClick={() => setSelectedClinic(c)}
+                                class="px-2.5 py-1 bg-[#14233c] hover:bg-[#0066ff] text-slate-300 hover:text-white rounded border border-[#1a2e4f] text-[11px] font-semibold transition-colors"
+                              >
+                                Details
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
                 </div>
 
+              </div>
+            )}
+
+            {/* TAB 5: ROI CALCULATOR */}
+            {activeTab === 'calculator' && (
+              <div class="max-w-3xl mx-auto bg-[#0d182b] border border-[#1a2e4f] rounded-xl p-6">
+                <div class="mb-6">
+                  <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <Calculator class="w-5 h-5 text-amber-400" />
+                    Interactive CareGP ROI & Billing Calculator
+                  </h2>
+                  <p class="text-xs text-slate-400">Estimate subscription cost, annual contract value, and GP hours saved</p>
+                </div>
+
+                <div class="space-y-6">
+                  
+                  {/* GP Count Slider */}
+                  <div>
+                    <div class="flex justify-between items-center mb-2">
+                      <label class="text-xs font-semibold text-slate-300">Number of GPs in Practice</label>
+                      <span class="text-sm font-black text-[#0066ff] numeric">{calcGps} GPs</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="1" 
+                      max="30" 
+                      value={calcGps} 
+                      onChange={(e) => setCalcGps(parseInt(e.target.value))}
+                      class="w-full accent-[#0066ff] bg-[#14233c] h-2 rounded-lg cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Payment Schedule Switch */}
+                  <div>
+                    <label class="text-xs font-semibold text-slate-300 mb-2 block">Payment Schedule Commitment</label>
+                    <div class="grid grid-cols-2 gap-3">
+                      <button 
+                        onClick={() => setCalcSchedule('Monthly')}
+                        class={`p-3 rounded-lg border text-xs font-bold transition-all ${
+                          calcSchedule === 'Monthly' 
+                            ? 'bg-[#0066ff] text-white border-[#0066ff]' 
+                            : 'bg-[#14233c] text-slate-300 border-[#1a2e4f]'
+                        }`}
+                      >
+                        Monthly Billing ($125/GP/mo)
+                      </button>
+                      <button 
+                        onClick={() => setCalcSchedule('Annual')}
+                        class={`p-3 rounded-lg border text-xs font-bold transition-all ${
+                          calcSchedule === 'Annual' 
+                            ? 'bg-[#00d2a0] text-slate-950 border-[#00d2a0]' 
+                            : 'bg-[#14233c] text-slate-300 border-[#1a2e4f]'
+                        }`}
+                      >
+                        Annual Billing ($105/GP/mo • 15% OFF)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Agent Count */}
+                  <div>
+                    <label class="text-xs font-semibold text-slate-300 mb-2 block">CareGP AI Agents Selected</label>
+                    <div class="grid grid-cols-3 gap-3">
+                      <button 
+                        onClick={() => setCalcAgents(1)}
+                        class={`p-3 rounded-lg border text-xs font-bold ${
+                          calcAgents === 1 ? 'bg-[#0066ff] text-white border-[#0066ff]' : 'bg-[#14233c] text-slate-300 border-[#1a2e4f]'
+                        }`}
+                      >
+                        1 Agent (Docs)
+                      </button>
+                      <button 
+                        onClick={() => setCalcAgents(2)}
+                        class={`p-3 rounded-lg border text-xs font-bold ${
+                          calcAgents === 2 ? 'bg-[#0066ff] text-white border-[#0066ff]' : 'bg-[#14233c] text-slate-300 border-[#1a2e4f]'
+                        }`}
+                      >
+                        2 Agents (+ Voice)
+                      </button>
+                      <button 
+                        onClick={() => setCalcAgents(3)}
+                        class={`p-3 rounded-lg border text-xs font-bold ${
+                          calcAgents === 3 ? 'bg-[#0066ff] text-white border-[#0066ff]' : 'bg-[#14233c] text-slate-300 border-[#1a2e4f]'
+                        }`}
+                      >
+                        3 Agents (+ Billing)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* CALCULATED RESULTS */}
+                  {(() => {
+                    const rate = calcSchedule === 'Annual' ? 105 : 125;
+                    const mult = calcAgents === 3 ? 2.1 : calcAgents === 2 ? 1.5 : 1.0;
+                    const monthlyCost = Math.round(calcGps * rate * mult);
+                    const annualCost = monthlyCost * 12;
+                    const estimatedHoursSavedMonth = Math.round(calcGps * 38);
+                    const estimatedDollarSavingsMonth = estimatedHoursSavedMonth * 150;
+
+                    return (
+                      <div class="mt-6 pt-6 border-t border-[#1a2e4f] grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-[#14233c] p-4 rounded-xl border border-[#1a2e4f]">
+                          <span class="text-xs text-slate-400 font-medium">Estimated CareGP Subscription</span>
+                          <div class="text-2xl font-black text-white numeric mt-1">{fmtCurrency(monthlyCost)} <span class="text-xs font-medium text-slate-400">/ mo</span></div>
+                          <div class="text-xs text-[#00d2a0] font-bold mt-1">{fmtCurrency(annualCost)} Annual Value</div>
+                        </div>
+
+                        <div class="bg-[#14233c] p-4 rounded-xl border border-[#00d2a0]/30">
+                          <span class="text-xs text-slate-400 font-medium">Estimated Clinic ROI</span>
+                          <div class="text-2xl font-black text-[#00d2a0] numeric mt-1">{fmtNum(estimatedHoursSavedMonth)} hrs <span class="text-xs text-slate-400">/ mo saved</span></div>
+                          <div class="text-xs text-slate-300 font-bold mt-1">{fmtCurrency(estimatedDollarSavingsMonth)} clinic value saved</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                </div>
               </div>
             )}
 
           </main>
 
-          {/* CLINIC DETAIL MODAL */}
+          {/* SLIDE-OVER DETAIL DRAWER FOR CLINIC */}
           {selectedClinic && (
-            <div class="fixed inset-0 z-50 bg-slate-900/60 dark:bg-[#060c18]/80 backdrop-blur-sm flex items-center justify-center p-4">
-              <div class="bg-white dark:bg-[#0f1c33] border border-slate-200 dark:border-[#1a2e4f] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-6">
-                
-                <div class="flex items-start justify-between border-b border-slate-200 dark:border-[#1a2e4f] pb-4">
-                  <div>
-                    <div class="flex items-center gap-2">
-                      <h3 class="text-lg font-bold text-slate-900 dark:text-white">{selectedClinic.name}</h3>
-                      {getStatusBadge(selectedClinic.status)}
+            <div class="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm">
+              <div class="w-full max-w-lg bg-[#0d182b] border-l border-[#1a2e4f] h-full p-6 overflow-y-auto flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between pb-4 border-b border-[#1a2e4f] mb-6">
+                    <div>
+                      <h3 class="text-lg font-bold text-white">{selectedClinic.name}</h3>
+                      <p class="text-xs text-slate-400">{selectedClinic.clinicSizeCategory} • {selectedClinic.paymentSchedule} Plan</p>
                     </div>
-                    {selectedClinic.comments && (
-                      <p class="text-xs text-amber-600 dark:text-amber-400 mt-1.5 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 inline-block font-medium">
-                        Note: {selectedClinic.comments}
-                      </p>
-                    )}
+                    <button onClick={() => setSelectedClinic(null)} class="p-1.5 rounded-lg bg-[#14233c] hover:bg-[#1a2e4f] text-slate-400 hover:text-white">
+                      <X class="w-5 h-5" />
+                    </button>
                   </div>
 
-                  <button onClick={() => setSelectedClinic(null)} class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#1a2e4f] text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-                    <X size={18} />
-                  </button>
-                </div>
+                  <div class="space-y-4 text-xs">
+                    <div class="bg-[#14233c] p-4 rounded-lg border border-[#1a2e4f] space-y-2">
+                      <div class="flex justify-between">
+                        <span class="text-slate-400">Status:</span>
+                        <span class="font-bold text-[#00d2a0]">{selectedClinic.status}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-slate-400">GP Seats:</span>
+                        <span class="font-bold text-white">{selectedClinic.numGps} GPs</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-slate-400">Payment Schedule:</span>
+                        <span class="font-bold text-white">{selectedClinic.paymentSchedule}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-slate-400">Annual Contract Value (ARR):</span>
+                        <span class="font-bold text-[#00d2a0] numeric">{fmtCurrency(selectedClinic.arr)}</span>
+                      </div>
+                    </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
-                    <span class="text-slate-500 dark:text-slate-400 font-medium">Total Financial Savings</span>
-                    <div class="text-lg font-bold text-[#00d2a0] numeric mt-1">
-                      ${Math.round(selectedClinic.financialSavings).toLocaleString()}
-                    </div>
-                  </div>
-
-                  <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
-                    <span class="text-slate-500 dark:text-slate-400 font-medium">Hours Reclaimed</span>
-                    <div class="text-lg font-bold text-slate-900 dark:text-white numeric mt-1">
-                      {Math.round(selectedClinic.totalHoursSaved)} hrs
-                    </div>
-                  </div>
-
-                  <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
-                    <span class="text-slate-500 dark:text-slate-400 font-medium">Active Agents</span>
-                    <div class="text-lg font-bold text-purple-600 dark:text-purple-400 numeric mt-1">
-                      {selectedClinic.agentCount} / 3 Agents
-                    </div>
-                  </div>
-
-                  <div class="bg-slate-50 dark:bg-[#060c18] p-3 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
-                    <span class="text-slate-500 dark:text-slate-400 font-medium">Monthly Subscription</span>
-                    <div class="text-lg font-bold text-[#0066ff] dark:text-[#388eff] numeric mt-1">
-                      ${selectedClinic.monthlySubscription}/mo
-                    </div>
-                  </div>
-                </div>
-
-                <div class="space-y-3 bg-slate-50 dark:bg-[#060c18] p-4 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
-                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Accuracy & Verification Layers</h4>
-                  
-                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-                    <div class="bg-white dark:bg-[#0f1c33] p-2.5 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                      <div class="text-slate-500 dark:text-slate-400 text-[10px] font-medium">Layer 1 (OCR)</div>
-                      <div class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{selectedClinic.accuracyL1.toFixed(1)}%</div>
-                    </div>
-                    <div class="bg-white dark:bg-[#0f1c33] p-2.5 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                      <div class="text-slate-500 dark:text-slate-400 text-[10px] font-medium">Layer 2 (Entities)</div>
-                      <div class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{selectedClinic.accuracyL2.toFixed(1)}%</div>
-                    </div>
-                    <div class="bg-white dark:bg-[#0f1c33] p-2.5 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                      <div class="text-slate-500 dark:text-slate-400 text-[10px] font-medium">Layer 3 (Coding)</div>
-                      <div class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{selectedClinic.accuracyL3.toFixed(1)}%</div>
-                    </div>
-                    <div class="bg-white dark:bg-[#0f1c33] p-2.5 rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
-                      <div class="text-slate-500 dark:text-slate-400 text-[10px] font-medium">Layer 4 (Safety)</div>
-                      <div class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{selectedClinic.accuracyL4.toFixed(1)}%</div>
+                    <div class="bg-[#14233c] p-4 rounded-lg border border-[#1a2e4f] space-y-2">
+                      <div class="flex justify-between">
+                        <span class="text-slate-400">Hours Saved:</span>
+                        <span class="font-bold text-white numeric">{fmtNum(selectedClinic.totalHoursSaved)} hrs</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-slate-400">Financial Value Saved:</span>
+                        <span class="font-bold text-[#00d2a0] numeric">{fmtCurrency(selectedClinic.financialSavings)}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-slate-400">Uploader Adoption:</span>
+                        <span class="font-bold text-white">{selectedClinic.uploaderPct}%</span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-[#060c18] p-4 rounded-xl border border-slate-200 dark:border-[#1a2e4f]">
-                  <div>
-                    <span class="text-slate-500">Document Allocations:</span> <strong class="text-slate-900 dark:text-slate-200">{selectedClinic.allocations.toLocaleString()}</strong>
-                  </div>
-                  <div>
-                    <span class="text-slate-500">Document Uploads:</span> <strong class="text-slate-900 dark:text-slate-200">{selectedClinic.uploads.toLocaleString()}</strong>
-                  </div>
-                  <div>
-                    <span class="text-slate-500">Pilot Launch Date:</span> <strong class="text-slate-900 dark:text-slate-200">{selectedClinic.pilotStartDate || 'N/A'}</strong>
-                  </div>
-                  <div>
-                    <span class="text-slate-500">Days Elapsed:</span> <strong class="text-slate-900 dark:text-slate-200">{selectedClinic.daysElapsed} days</strong>
-                  </div>
-                  <div>
-                    <span class="text-slate-500">Time Saved / Doc:</span> <strong class="text-[#00d2a0] font-bold">{selectedClinic.timePerDocSec.toFixed(1)} seconds</strong>
-                  </div>
-                  <div>
-                    <span class="text-slate-500">NPS Score:</span> <strong class="text-[#00d2a0] font-bold">+{selectedClinic.nps}</strong>
-                  </div>
-                </div>
-
-                <div class="flex justify-end pt-2">
-                  <button onClick={() => setSelectedClinic(null)} class="px-4 py-2 bg-slate-100 dark:bg-[#1a2e4f] hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold rounded-lg border border-slate-200 dark:border-[#1a2e4f]">
+                <div class="pt-6 border-t border-[#1a2e4f]">
+                  <button onClick={() => setSelectedClinic(null)} class="w-full py-2.5 bg-[#0066ff] hover:bg-blue-600 text-white font-bold rounded-lg text-xs">
                     Close Details
                   </button>
                 </div>
-
               </div>
             </div>
           )}
 
-          {/* FOOTER MATCHING CAREGP BRANDING */}
-          <footer class="border-t border-slate-200 dark:border-[#1a2e4f] py-4 px-4 text-center text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-[#000c1c]">
-            <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-              <div class="flex items-center gap-2 font-medium">
-                <span class="text-slate-900 dark:text-white font-bold">Care<span class="text-[#00a3ff]">GP</span></span>
-                <span>• Financial & Operational Intelligence Dashboard</span>
-              </div>
-              <div>
-                Connected to CareGP Google Sheet ({summary.totalClinics} General Practices)
-              </div>
+          {/* FOOTER */}
+          <footer class="bg-[#0d182b] border-t border-[#1a2e4f] py-6 text-center text-xs text-slate-500">
+            <div class="max-w-7xl mx-auto px-4">
+              CareGP Financial Dashboard • Australian Medical AI Intelligence Platform
             </div>
           </footer>
+
         </div>
       );
     }
